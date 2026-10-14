@@ -1,0 +1,145 @@
+{
+  "evaluation_timestamp": "2026-10-14T11:49:29.355285",
+  "rag_evaluation": {
+    "evaluation_timestamp": "2026-10-14T11:49:29.286521",
+    "course_evaluated": "CS101",
+    "judge_model": "Local Ollama (gemma4:e4b)",
+    "tutor_model": "Local Ollama (gemma4:e4b)",
+    "total_test_cases": 5,
+    "average_metrics": {
+      "faithfulness": 0.1553,
+      "answer_relevancy": 0.5356,
+      "context_precision": 0.4,
+      "context_recall": 0.8,
+      "citation_validity": 1.0,
+      "abstention_quality": 1.0
+    },
+    "test_cases": [
+      {
+        "id": "rag_001",
+        "query": "What is the primary objective of Gradient Descent in neural network optimization?",
+        "is_answerable": true,
+        "has_insufficient_evidence": false,
+        "retrieved_count": 1,
+        "metrics": {
+          "faithfulness": 0.2353,
+          "answer_relevancy": 0.8889,
+          "context_precision": 1.0,
+          "context_recall": 1.0,
+          "citation_validity": 1.0,
+          "abstention_quality": 1.0
+        }
+      },
+      {
+        "id": "rag_002",
+        "query": "Explain how the Transformer self-attention mechanism computes attention weights.",
+        "is_answerable": true,
+        "has_insufficient_evidence": false,
+        "retrieved_count": 1,
+        "metrics": {
+          "faithfulness": 0.2581,
+          "answer_relevancy": 0.6667,
+          "context_precision": 0.0,
+          "context_recall": 0.0,
+          "citation_validity": 1.0,
+          "abstention_quality": 1.0
+        }
+      },
+      {
+        "id": "rag_003",
+        "query": "What are the quantum gate fidelity thresholds required for fault-tolerant surface code error correction?",
+        "is_answerable": false,
+        "has_insufficient_evidence": true,
+        "retrieved_count": 0,
+        "metrics": {
+          "faithfulness": 0.0,
+          "answer_relevancy": 0.1333,
+          "context_precision": 0.0,
+          "context_recall": 1.0,
+          "citation_validity": 1.0,
+          "abstention_quality": 1.0
+        }
+      },
+      {
+        "id": "rag_004",
+        "query": "What is the difference between Batch Gradient Descent and Stochastic Gradient Descent?",
+        "is_answerable": true,
+        "has_insufficient_evidence": false,
+        "retrieved_count": 2,
+        "metrics": {
+          "faithfulness": 0.283,
+          "answer_relevancy": 0.8889,
+          "context_precision": 1.0,
+          "context_recall": 1.0,
+          "citation_validity": 1.0,
+          "abstention_quality": 1.0
+        }
+      },
+      {
+        "id": "rag_005",
+        "query": "Who was the prime minister of the United Kingdom during the 1906 general election?",
+        "is_answerable": false,
+        "has_insufficient_evidence": true,
+        "retrieved_count": 0,
+        "metrics": {
+          "faithfulness": 0.0,
+          "answer_relevancy": 0.1,
+          "context_precision": 0.0,
+          "context_recall": 1.0,
+          "citation_validity": 1.0,
+          "abstention_quality": 1.0
+        }
+      }
+    ]
+  },
+  "student_simulation": {
+    "simulation_timestamp": "2026-10-14T11:49:29.355117",
+    "profiles_tested": 3,
+    "remediation_success_rate": 1.0,
+    "overall_understanding_level_accuracy": 1.0,
+    "results": [
+      {
+        "profile": "Novice Learner",
+        "hidden_true_level": "Weak",
+        "initial_mastery": 0.2,
+        "final_mastery": 0.5599,
+        "mastery_gain": 0.3599,
+        "estimated_understanding_level": "Weak",
+        "understanding_level_accuracy": 1.0,
+        "total_questions_served": 9,
+        "duplicate_serves": 0,
+        "repetition_rate": 0.0,
+        "remediation_triggered": true,
+        "remediation_successful": true
+      },
+      {
+        "profile": "Intermediate Learner",
+        "hidden_true_level": "Developing",
+        "initial_mastery": 0.5,
+        "final_mastery": 0.6775,
+        "mastery_gain": 0.1775,
+        "estimated_understanding_level": "Developing",
+        "understanding_level_accuracy": 1.0,
+        "total_questions_served": 9,
+        "duplicate_serves": 0,
+        "repetition_rate": 0.0,
+        "remediation_triggered": true,
+        "remediation_successful": true
+      },
+      {
+        "profile": "Advanced Learner",
+        "hidden_true_level": "Strong",
+        "initial_mastery": 0.8,
+        "final_mastery": 0.9752,
+        "mastery_gain": 0.1752,
+        "estimated_understanding_level": "Strong",
+        "understanding_level_accuracy": 1.0,
+        "total_questions_served": 9,
+        "duplicate_serves": 0,
+        "repetition_rate": 0.0,
+        "remediation_triggered": false,
+        "remediation_successful": false
+      }
+    ]
+  }
+}

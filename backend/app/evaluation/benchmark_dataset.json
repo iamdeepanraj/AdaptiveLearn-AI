@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "description": "Benchmark evaluation dataset for AdaptiveLearn AI RAG Tutor and Adaptive Assessment testing.",
+  "version": "1.0.0",
+  "test_cases": [
+    {
+      "id": "rag_001",
+      "course_code": "CS101",
+      "query": "What is the primary objective of Gradient Descent in neural network optimization?",
+      "is_answerable": true,
+      "expected_topic": "Optimization & Backpropagation",
+      "expected_source": {
+        "filename": "Neural_Networks_Fundamentals.pdf",
+        "page_number": 3,
+        "keywords": ["gradient descent", "objective", "loss function", "minimize"]
+      },
+      "gold_answer": "Gradient Descent seeks to minimize the objective loss function by iteratively updating model weights in the direction opposite to the gradient of the loss with respect to those weights."
+    },
+    {
+      "id": "rag_002",
+      "course_code": "CS101",
+      "query": "Explain how the Transformer self-attention mechanism computes attention weights.",
+      "is_answerable": true,
+      "expected_topic": "Attention Mechanisms & Transformers",
+      "expected_source": {
+        "filename": "Attention_and_Transformers_Lecture.pptx",
+        "slide_number": 5,
+        "keywords": ["query", "key", "value", "softmax", "dimension"]
+      },
+      "gold_answer": "Self-attention computes weights by taking the dot product of Query and Key vectors, scaling by the square root of key dimension d_k, and applying the softmax function to weight the Value vectors."
+    },
+    {
+      "id": "rag_003",
+      "course_code": "CS101",
+      "query": "What are the quantum gate fidelity thresholds required for fault-tolerant surface code error correction?",
+      "is_answerable": false,
+      "expected_topic": null,
+      "expected_source": null,
+      "gold_answer": null,
+      "abstention_expected": true,
+      "notes": "Out of domain test case. The course CS101 covers classical machine learning and neural networks, not quantum computing error correction."
+    },
+    {
+      "id": "rag_004",
+      "course_code": "CS101",
+      "query": "What is the difference between Batch Gradient Descent and Stochastic Gradient Descent?",
+      "is_answerable": true,
+      "expected_topic": "Optimization & Backpropagation",
+      "expected_source": {
+        "filename": "Neural_Networks_Fundamentals.pdf",
+        "page_number": 4,
+        "keywords": ["batch", "stochastic", "subset", "variance"]
+      },
+      "gold_answer": "Batch Gradient Descent computes gradients using the entire training dataset per update, whereas Stochastic Gradient Descent (SGD) uses a single randomly chosen sample or small mini-batch per step, allowing faster iterations with higher variance."
+    },
+    {
+      "id": "rag_005",
+      "course_code": "CS101",
+      "query": "Who was the prime minister of the United Kingdom during the 1906 general election?",
+      "is_answerable": false,
+      "expected_topic": null,
+      "expected_source": null,
+      "gold_answer": null,
+      "abstention_expected": true,
+      "notes": "Unrelated historical question that must trigger honest academic abstention."
+    }
+  ]
+}
