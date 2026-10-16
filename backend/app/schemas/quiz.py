@@ -15,6 +15,8 @@ class QuestionStudentView(BaseModel):
     difficulty: str
     question_text: str
     options: Optional[List[QuestionOption]] = None
+    section: Optional[str] = None
+    section_code: Optional[str] = None
     # Notice: correct_answer is strictly omitted here to protect test integrity!
 
 class QuizStartRequest(BaseModel):
@@ -86,6 +88,33 @@ class AssessmentTopicBreakdown(BaseModel):
     mastery_state: str
     status: str  # "strength", "developing", "weak"
 
+class SectionScore(BaseModel):
+    section_code: str  # "A", "B", "C"
+    section_name: str  # "Section A: Multiple choice", "Section B: Short answers", "Section C: Numerical problems"
+    questions_count: int
+    questions_answered: int
+    total_score: float
+    max_score: float
+    accuracy_percentage: float
+
+class PerformanceComparison(BaseModel):
+    has_comparison: bool = False
+    reason: Optional[str] = None
+    mcq_score: Optional[float] = None
+    short_answer_score: Optional[float] = None
+    gap: Optional[float] = None
+    diagnosis_category: Optional[str] = None  # "mcq_good_written_weak", "written_good_mcq_weak", "both_weak", "both_good", "insufficient_data"
+    title: Optional[str] = None
+    diagnosis: Optional[str] = None
+    suggestions: List[str] = []
+    missing_key_terms: List[str] = []
+    suggested_structure: Optional[str] = None
+    side_by_side_answers: List[Dict[str, Any]] = []
+    partial_distractor_analysis: Optional[Dict[str, Any]] = None
+    partial_picks_comparison: List[Dict[str, Any]] = []
+    practice_set_type: Optional[str] = None
+    practice_questions: List[QuestionStudentView] = []
+
 class AssessmentReport(BaseModel):
     quiz_session_id: int
     course_title: str
@@ -97,3 +126,5 @@ class AssessmentReport(BaseModel):
     identified_misconceptions: List[str]
     strengths: List[str]
     recommended_next_steps: List[str]
+    section_scores: List[SectionScore] = []
+    performance_comparison: Optional[PerformanceComparison] = None

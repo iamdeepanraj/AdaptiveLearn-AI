@@ -131,7 +131,7 @@ export default function StudentDashboardPage() {
           </div>
           <div>
             <span className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">{data.topics_mastered_count}</span>
-            <p className="text-xs text-slate-400 mt-1">Modules with P(L) ≥ 0.70</p>
+            <p className="text-xs text-slate-400 mt-1">Modules with P(L) ≥ {(data.mastery_threshold ?? 0.85).toFixed(2)}</p>
           </div>
         </div>
 

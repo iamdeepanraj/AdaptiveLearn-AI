@@ -1,26 +1,103 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Core App Background & Text */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #475569;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #6366f1;
+
+  /* Primary Accent (Indigo) */
+  --primary: #4f46e5;
+  --primary-hover: #4338ca;
+  --primary-foreground: #ffffff;
+
+  /* Status Tokens (WCAG AA Contrast >= 4.5:1) */
+  --status-correct-bg: #ecfdf5;
+  --status-correct-border: #a7f3d0;
+  --status-correct-text: #065f46;
+
+  --status-partial-bg: #fffbeb;
+  --status-partial-border: #fde68a;
+  --status-partial-text: #92400e;
+
+  --status-wrong-bg: #fff1f2;
+  --status-wrong-border: #fecdd3;
+  --status-wrong-text: #9f1239;
+
+  --status-weak-bg: #fff1f2;
+  --status-weak-border: #fecdd3;
+  --status-weak-text: #9f1239;
+
+  --status-strong-bg: #ecfdf5;
+  --status-strong-border: #a7f3d0;
+  --status-strong-text: #065f46;
+}
+
+.dark {
+  /* Core App Background & Text (Dark) */
+  --background: #090d16;
+  --foreground: #f8fafc;
+  --card: #0f172a;
+  --card-foreground: #f8fafc;
+  --popover: #0f172a;
+  --popover-foreground: #f8fafc;
+  --muted: #1e293b;
+  --muted-foreground: #94a3b8;
+  --border: #1e293b;
+  --input: #1e293b;
+  --ring: #818cf8;
+
+  /* Primary Accent (Indigo) */
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-foreground: #ffffff;
+
+  /* Status Tokens (Dark, WCAG AA Contrast >= 4.5:1) */
+  --status-correct-bg: #064e3b;
+  --status-correct-border: #047857;
+  --status-correct-text: #6ee7b7;
+
+  --status-partial-bg: #451a03;
+  --status-partial-border: #78350f;
+  --status-partial-text: #fde68a;
+
+  --status-wrong-bg: #4c0519;
+  --status-wrong-border: #881337;
+  --status-wrong-text: #fecdd3;
+
+  --status-weak-bg: #4c0519;
+  --status-weak-border: #881337;
+  --status-weak-text: #fecdd3;
+
+  --status-strong-bg: #064e3b;
+  --status-strong-border: #047857;
+  --status-strong-text: #6ee7b7;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter, system-ui, -apple-system, sans-serif);
 }

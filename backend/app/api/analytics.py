@@ -12,6 +12,7 @@ from backend.app.schemas.analytics import StudentDashboardSummary, TopicMasteryS
 from backend.app.auth import get_current_user
 from backend.app.learner_model.recommendation_engine import RecommendationEngine
 from backend.app.learner_model.spaced_repetition import SpacedRepetitionScheduler
+from backend.app.config import settings
 
 router = APIRouter(prefix="/analytics", tags=["Learning Analytics"])
 
@@ -65,7 +66,7 @@ def get_student_dashboard(
             is_due_for_review=is_due
         )
 
-        if m.p_mastery >= 0.70:
+        if m.p_mastery >= settings.MASTERY_THRESHOLD:
             strong_list.append(item)
             mastered_cnt += 1
         elif m.total_attempts > 0 and m.p_mastery < 0.50:
@@ -131,6 +132,7 @@ def get_student_dashboard(
         total_study_sessions=total_sessions,
         total_questions_answered=total_responses,
         overall_accuracy=overall_acc,
+        mastery_threshold=settings.MASTERY_THRESHOLD,
         weak_topics=weak_list,
         strong_topics=strong_list,
         upcoming_revisions=revision_list,

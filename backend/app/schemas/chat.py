@@ -9,6 +9,10 @@ class ChatMessageRequest(BaseModel):
     topic_id: Optional[int] = None
     message: str
     allow_outside_knowledge: bool = False
+    prioritized_document_id: Optional[int] = None
+
+class RenameConversationRequest(BaseModel):
+    title: str
 
 class ChatMessageResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
@@ -20,6 +24,7 @@ class ChatMessageResponse(BaseModel):
     citations: List[SourceCitation] = []
     is_grounded: bool
     has_insufficient_evidence: bool
+    model_badge: Optional[str] = None
     created_at: datetime
 
 class ConversationResponse(BaseModel):

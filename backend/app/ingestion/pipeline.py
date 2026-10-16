@@ -33,7 +33,7 @@ class IngestionPipeline:
             return SourceType.PPTX
         elif ext in ["mp4", "mov", "avi"]:
             return SourceType.VIDEO
-        elif ext in ["mp3", "wav", "m4a"]:
+        elif ext in ["mp3", "wav", "m4a", "vtt", "srt"]:
             return SourceType.AUDIO
         elif ext in ["png", "jpg", "jpeg"]:
             return SourceType.IMAGE

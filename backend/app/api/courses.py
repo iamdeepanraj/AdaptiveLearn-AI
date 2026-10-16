@@ -11,6 +11,10 @@ from backend.app.schemas.course import (
     CourseCreate, CourseResponse, TopicResponse,
     PrerequisiteGraphResponse, PrerequisiteGraphNode, PrerequisiteGraphEdge
 )
+from backend.app.schemas.flashcard import (
+    FlashcardDeckResponse, FlashcardReviewRequest, FlashcardReviewResponse
+)
+from backend.app.services.flashcard_service import FlashcardService
 from backend.app.auth import get_current_user
 
 router = APIRouter(prefix="/courses", tags=["Courses"])
@@ -238,3 +242,49 @@ def get_topic_practice_problems(
         ]
 
     return problems
+
+@router.get("/{course_id}/topics/{topic_id}/flashcards", response_model=FlashcardDeckResponse)
+def get_topic_flashcards(
+    course_id: int,
+    topic_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Returns 6-10 Quick Revise flashcards extracted strictly from the topic's uploaded material,
+    each with an exact citation to its page, slide, or timestamp.
+    """
+    try:
+        deck = FlashcardService.get_flashcards_for_topic(
+            db=db,
+            course_id=course_id,
+            topic_id=topic_id,
+            user_id=current_user.id
+        )
+        return deck
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/{course_id}/topics/{topic_id}/flashcards/review", response_model=FlashcardReviewResponse)
+def review_topic_flashcard(
+    course_id: int,
+    topic_id: int,
+    req: FlashcardReviewRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Records a Quick Revise flashcard flip review. 'Didn't know' cards count
+    as an explicit learning signal updating the BKT learner model for this topic.
+    """
+    try:
+        res = FlashcardService.review_flashcard(
+            db=db,
+            user_id=current_user.id,
+            req=req
+        )
+        return res
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

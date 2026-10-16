@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from backend.app.database import get_db
 from backend.app.models.user import User
 from backend.app.models.chat import Conversation, ChatMessage
-from backend.app.schemas.chat import ChatMessageRequest, ChatMessageResponse, ConversationResponse
+from backend.app.schemas.chat import ChatMessageRequest, ChatMessageResponse, ConversationResponse, RenameConversationRequest
 from backend.app.schemas.document import SourceCitation
 from backend.app.auth import get_current_user
 from backend.app.services.tutor_service import TutorService
@@ -26,7 +26,8 @@ def send_chat_message(
             message_text=req.message,
             conversation_id=req.conversation_id,
             topic_id=req.topic_id,
-            allow_outside_knowledge=req.allow_outside_knowledge
+            allow_outside_knowledge=req.allow_outside_knowledge,
+            prioritized_document_id=req.prioritized_document_id
         )
 
         citations_out = []
@@ -42,10 +43,47 @@ def send_chat_message(
             citations=citations_out,
             is_grounded=assistant_msg.is_grounded,
             has_insufficient_evidence=assistant_msg.has_insufficient_evidence,
+            model_badge=getattr(assistant_msg, 'model_badge', None),
             created_at=assistant_msg.created_at
         )
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@router.post("/stream")
+def stream_chat_message(
+    req: ChatMessageRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    from fastapi.responses import StreamingResponse
+    return StreamingResponse(
+        TutorService.stream_answer_student_question(
+            db=db,
+            user_id=current_user.id,
+            course_id=req.course_id,
+            message_text=req.message,
+            conversation_id=req.conversation_id,
+            topic_id=req.topic_id,
+            allow_outside_knowledge=req.allow_outside_knowledge,
+            prioritized_document_id=req.prioritized_document_id
+        ),
+        media_type="text/event-stream"
+    )
+
+@router.get("/health")
+def get_chat_health():
+    from backend.app.ai.llm import get_llm
+    from backend.app.config import settings
+    llm = get_llm()
+    configured, reason = llm.check_health()
+    badge = f"{settings.OLLAMA_MODEL} · local" if (configured and settings.LLM_PROVIDER in ["ollama", "anthropic"]) else "extractive · offline"
+    return {
+        "is_online": configured,
+        "model": settings.OLLAMA_MODEL,
+        "badge": badge,
+        "reason": reason,
+        "fix_command": f"Start Ollama and run: ollama pull {settings.OLLAMA_MODEL}"
+    }
 
 @router.get("/conversations", response_model=List[ConversationResponse])
 def get_conversations(
@@ -56,7 +94,7 @@ def get_conversations(
     convos = db.query(Conversation).filter(
         Conversation.user_id == current_user.id,
         Conversation.course_id == course_id
-    ).order_by(Conversation.updated_at.desc()).all()
+    ).order_by(Conversation.created_at.desc()).all()
 
     results = []
     for c in convos:
@@ -97,6 +135,7 @@ def get_conversation_detail(
             citations=citations_out,
             is_grounded=m.is_grounded,
             has_insufficient_evidence=m.has_insufficient_evidence,
+            model_badge=m.model_badge,
             created_at=m.created_at
         ))
 
@@ -108,3 +147,46 @@ def get_conversation_detail(
         updated_at=convo.updated_at,
         messages=msgs
     )
+
+@router.patch("/conversations/{conversation_id}", response_model=ConversationResponse)
+def rename_conversation(
+    conversation_id: int,
+    req: RenameConversationRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    convo = db.query(Conversation).filter(
+        Conversation.id == conversation_id,
+        Conversation.user_id == current_user.id
+    ).first()
+    if not convo:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    convo.title = req.title.strip() or "Study Session"
+    db.commit()
+    db.refresh(convo)
+    return ConversationResponse(
+        id=convo.id,
+        course_id=convo.course_id,
+        title=convo.title,
+        created_at=convo.created_at,
+        updated_at=convo.updated_at,
+        messages=[]
+    )
+
+@router.delete("/conversations/{conversation_id}")
+def delete_conversation(
+    conversation_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    convo = db.query(Conversation).filter(
+        Conversation.id == conversation_id,
+        Conversation.user_id == current_user.id
+    ).first()
+    if not convo:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+
+    db.delete(convo)
+    db.commit()
+    return {"status": "deleted", "id": conversation_id}

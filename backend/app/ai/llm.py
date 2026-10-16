@@ -3,7 +3,7 @@ import json
 import base64
 import logging
 from abc import ABC, abstractmethod
-from typing import Optional, Dict, Any, Type, Tuple, List
+from typing import Optional, Dict, Any, Type, Tuple, List, Generator
 import httpx
 from pydantic import BaseModel, ValidationError
 
@@ -37,6 +37,16 @@ class BaseLLMProvider(ABC):
     def check_health(self) -> Tuple[bool, str]:
         """Returns (configured: bool, reason: str)."""
         pass
+
+    def stream_complete(
+        self,
+        prompt: str,
+        system: Optional[str] = None,
+        temperature: float = 0.2
+    ) -> Generator[str, None, None]:
+        """Streams completion tokens one-by-one."""
+        full_text = self.complete(prompt=prompt, system=system, temperature=temperature)
+        yield full_text
 
     def complete_json(
         self,
@@ -142,6 +152,56 @@ class OllamaProvider(BaseLLMProvider):
         except Exception as e:
             logger.warning(f"Ollama complete() unreachable or error ({e}). Falling back to labeled extractive mode.")
             return MockLocalProvider().complete(prompt=prompt, system=system, temperature=temperature, format=format)
+
+    def stream_complete(
+        self,
+        prompt: str,
+        system: Optional[str] = None,
+        temperature: float = 0.2
+    ) -> Generator[str, None, None]:
+        """
+        Streams completion token by token from Ollama /api/chat with stream=True.
+        Falls back cleanly to MockLocalProvider streaming if unreachable.
+        """
+        messages = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        messages.append({"role": "user", "content": prompt})
+
+        payload = {
+            "model": self.model,
+            "messages": messages,
+            "stream": True,
+            "options": {
+                "temperature": temperature,
+                "num_ctx": self.num_ctx
+            }
+        }
+        client_timeout = httpx.Timeout(self.timeout, connect=2.0)
+        yielded_any = False
+        try:
+            with httpx.Client(timeout=client_timeout) as client:
+                with client.stream("POST", f"{self.base_url}/api/chat", json=payload) as response:
+                    if response.status_code == 200:
+                        for line in response.iter_lines():
+                            if not line:
+                                continue
+                            try:
+                                chunk_json = json.loads(line)
+                                token = chunk_json.get("message", {}).get("content", "")
+                                if token:
+                                    yielded_any = True
+                                    yield token
+                            except Exception:
+                                continue
+                    else:
+                        logger.warning(f"Ollama stream returned HTTP {response.status_code}. Using extractive fallback.")
+        except Exception as e:
+            logger.warning(f"Ollama stream_complete failed ({e}), falling back to extractive chunks.")
+
+        if not yielded_any:
+            for chunk in MockLocalProvider().stream_complete(prompt=prompt, system=system, temperature=temperature):
+                yield chunk
 
     def describe_image(
         self,
@@ -342,6 +402,17 @@ class MockLocalProvider(BaseLLMProvider):
 
     def check_health(self) -> Tuple[bool, str]:
         return True, "Deterministic extractive fallback active"
+
+    def stream_complete(
+        self,
+        prompt: str,
+        system: Optional[str] = None,
+        temperature: float = 0.2
+    ) -> Generator[str, None, None]:
+        full_text = self.complete(prompt=prompt, system=system, temperature=temperature)
+        words = full_text.split(" ")
+        for i, w in enumerate(words):
+            yield w + (" " if i < len(words) - 1 else "")
 
 
 _cached_llm: Optional[BaseLLMProvider] = None

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { api } from '@/lib/api';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 function NavbarContent() {
   const pathname = usePathname();
@@ -147,8 +148,9 @@ function NavbarContent() {
             )}
           </div>
 
-          {/* User Profile */}
+          {/* Theme Toggle & User Profile */}
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             {activeUser ? (
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 pl-2">

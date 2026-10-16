@@ -191,6 +191,61 @@ function UnderstandingContent() {
 
       {data && !loading && (
         <div className="space-y-10">
+          {/* Latest Quiz Diagnostic Suggestions */}
+          {data.latest_quiz_suggestion && (
+            <div className="p-6 rounded-3xl border shadow-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
+                  <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                    Latest Quiz Diagnostic: {data.latest_quiz_suggestion.title}
+                  </h3>
+                </div>
+                {data.latest_quiz_suggestion.mcq_score !== undefined && data.latest_quiz_suggestion.short_answer_score !== undefined && (
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 shrink-0 self-start sm:self-auto">
+                    MCQ {Math.round(data.latest_quiz_suggestion.mcq_score * 100)}% · Written {Math.round(data.latest_quiz_suggestion.short_answer_score * 100)}%
+                  </span>
+                )}
+              </div>
+
+              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+                {data.latest_quiz_suggestion.diagnosis}
+              </p>
+
+              {data.latest_quiz_suggestion.suggestions?.length > 0 && (
+                <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+                  {data.latest_quiz_suggestion.suggestions.map((s, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="text-indigo-600 font-bold shrink-0">•</span>
+                      <span>{s}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+
+              {data.latest_quiz_suggestion.missing_key_terms?.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                  <span className="text-[11px] font-semibold text-slate-500">Key terms to review:</span>
+                  {data.latest_quiz_suggestion.missing_key_terms.map((term, i) => (
+                    <span key={i} className="px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 text-xs font-semibold border border-rose-200 dark:border-rose-900">
+                      {term}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center gap-3">
+                <Link
+                  href="/quiz"
+                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition flex items-center gap-1.5"
+                >
+                  <span>Launch Practice Drill</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            </div>
+          )}
+
           {/* Top 3 Weak Concepts Panel */}
           <div>
             <div className="flex items-center justify-between mb-4">

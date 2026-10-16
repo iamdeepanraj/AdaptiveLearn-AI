@@ -39,10 +39,13 @@ class Settings(BaseSettings):
     # Speech-to-Text
     STT_PROVIDER: str = os.getenv("STT_PROVIDER", "mock_stt")
     
+    # Mastery Threshold
+    MASTERY_THRESHOLD: float = float(os.getenv("MASTERY_THRESHOLD", "0.85"))
+
     # File Storage
     UPLOAD_DIR: str = os.getenv("UPLOAD_DIR", os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "uploads")))
     MAX_FILE_SIZE_MB: int = 50
-    ALLOWED_EXTENSIONS: List[str] = ["pdf", "pptx", "mp4", "mp3", "wav", "m4a", "png", "jpg", "jpeg"]
+    ALLOWED_EXTENSIONS: List[str] = ["pdf", "pptx", "mp4", "mp3", "wav", "m4a", "png", "jpg", "jpeg", "vtt", "srt"]
     
     # CORS
     CORS_ORIGINS: List[str] = [

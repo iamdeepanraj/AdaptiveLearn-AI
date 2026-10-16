@@ -8,7 +8,7 @@ import {
   HelpCircle, Award, FileText, ExternalLink, RefreshCw, BookOpen, RotateCcw,
   Check, ListFilter, Hash, MessageSquare, Layers, Clock
 } from 'lucide-react';
-import { api, Course, Topic, QuizSession, QuizResponseResult, SourceCitation } from '@/lib/api';
+import { api, Course, Topic, QuizSession, QuizResponseResult, SourceCitation, AssessmentReport, QuestionStudentView } from '@/lib/api';
 import { BKTBadge } from '@/components/bkt-badge';
 import { SourcePreviewModal } from '@/components/source-preview-modal';
 
@@ -34,6 +34,7 @@ function QuizContent() {
   const [activeCitation, setActiveCitation] = useState<SourceCitation | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [assessmentReport, setAssessmentReport] = useState<AssessmentReport | null>(null);
 
   // Cumulative results tracking for instant end-of-quiz dashboard
   const [answersHistory, setAnswersHistory] = useState<{
@@ -108,6 +109,7 @@ function QuizContent() {
     setUserAnswer('');
     setAnswersHistory([]);
     setQuizFinished(false);
+    setAssessmentReport(null);
 
     try {
       const topicIds = selectedTopicIds.length > 0 ? selectedTopicIds : undefined;
@@ -162,7 +164,7 @@ function QuizContent() {
     }
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     if (!session) return;
     setActiveFeedback(null);
     setUserAnswer('');
@@ -171,10 +173,46 @@ function QuizContent() {
       setCurrentIdx((prev) => prev + 1);
     } else {
       // Finished all questions - finalize and show results
-      api.finishQuiz(session.id).catch(() => {});
+      try {
+        const report = await api.finishQuiz(session.id);
+        setAssessmentReport(report);
+      } catch (err) {
+        console.error('Failed to load assessment report:', err);
+      }
       setQuizFinished(true);
     }
   };
+
+  // Sections derived from session questions
+  const sections = React.useMemo(() => {
+    if (!session?.questions) return [];
+    const secA = session.questions
+      .map((q, idx) => ({ q, idx }))
+      .filter(({ q }) => q.question_type === 'mcq');
+    const secB = session.questions
+      .map((q, idx) => ({ q, idx }))
+      .filter(({ q }) => q.question_type === 'short_answer');
+    const secC = session.questions
+      .map((q, idx) => ({ q, idx }))
+      .filter(({ q }) => q.question_type === 'numerical');
+
+    const list: { code: 'A' | 'B' | 'C'; title: string; items: { q: QuestionStudentView; idx: number }[] }[] = [];
+    if (secA.length > 0) list.push({ code: 'A', title: 'Section A: Multiple choice', items: secA });
+    if (secB.length > 0) list.push({ code: 'B', title: 'Section B: Short answers', items: secB });
+    if (secC.length > 0) list.push({ code: 'C', title: 'Section C: Numerical problems', items: secC });
+    return list;
+  }, [session?.questions]);
+
+  // Active section based on currentIdx
+  const activeSection = React.useMemo(() => {
+    if (!sections.length) return null;
+    return sections.find((s) => s.items.some((item) => item.idx === currentIdx)) || sections[0];
+  }, [sections, currentIdx]);
+
+  const activeSectionAnsweredCount = React.useMemo(() => {
+    if (!activeSection) return 0;
+    return activeSection.items.filter((item) => answersHistory.some((h) => h.question_id === item.q.id)).length;
+  }, [activeSection, answersHistory]);
 
   const currentQ = session?.questions[currentIdx];
 
@@ -411,32 +449,76 @@ function QuizContent() {
       {/* 2. Active Question Runner (one question at a time with instant feedback) */}
       {session && !quizFinished && (
         <div className="space-y-6">
+          {/* Section Navigation Tabs */}
+          {sections.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+              {sections.map((sec) => {
+                const isCurrent = activeSection?.code === sec.code;
+                const answeredInSec = sec.items.filter((it) => answersHistory.some((h) => h.question_id === it.q.id)).length;
+                return (
+                  <button
+                    key={sec.code}
+                    type="button"
+                    onClick={() => {
+                      // Jump to first unanswered question in section, or first question in section
+                      const unanswered = sec.items.find((it) => !answersHistory.some((h) => h.question_id === it.q.id));
+                      setCurrentIdx(unanswered ? unanswered.idx : sec.items[0].idx);
+                      setActiveFeedback(null);
+                      setUserAnswer('');
+                    }}
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                      isCurrent
+                        ? 'bg-indigo-600 text-white shadow-sm'
+                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                    }`}
+                  >
+                    <span>{sec.title}</span>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                      isCurrent ? 'bg-indigo-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                    }`}>
+                      {answeredInSec}/{sec.items.length}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
           {/* Progress Bar & Header */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-indigo-600">
-                Question {currentIdx + 1} of {session.total_questions}
-              </span>
-              <span className="text-xs text-slate-400">•</span>
-              <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                {currentQ?.topic_name}
-              </span>
-              <span className="text-xs text-slate-400">•</span>
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 uppercase">
-                {currentQ?.question_type.replace('_', ' ')}
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                  {activeSection?.title || 'Section'} • Question {currentIdx + 1} of {session.total_questions}
+                </span>
+                <span className="text-xs text-slate-400">•</span>
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                  {currentQ?.topic_name}
+                </span>
+                <span className="text-xs text-slate-400">•</span>
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase">
+                  {currentQ?.question_type.replace('_', ' ')}
+                </span>
+              </div>
+
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase">
+                {currentQ?.difficulty}
               </span>
             </div>
 
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 uppercase">
-              {currentQ?.difficulty}
-            </span>
-          </div>
-
-          <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
-            <div
-              className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
-              style={{ width: `${((currentIdx + 1) / session.total_questions) * 100}%` }}
-            />
+            {/* Per-Section Progress Bar */}
+            <div className="space-y-1">
+              <div className="flex items-center justify-between text-[11px] text-slate-500">
+                <span>{activeSection?.title} Progress</span>
+                <span>{activeSectionAnsweredCount} of {activeSection?.items.length || 1} Answered</span>
+              </div>
+              <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+                <div
+                  className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${(activeSectionAnsweredCount / Math.max(1, activeSection?.items.length || 1)) * 100}%` }}
+                />
+              </div>
+            </div>
           </div>
 
           {/* Question Card */}
@@ -555,22 +637,29 @@ function QuizContent() {
                   </div>
 
                   {/* BKT Mastery Delta Pill */}
-                  <div className="flex items-center gap-2">
-                    <span className="text-[11px] font-semibold text-slate-500">BKT Update:</span>
-                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md ${
-                      activeFeedback.mastery_delta >= 0
-                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
-                        : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200'
-                    }`}>
-                      {activeFeedback.mastery_delta >= 0 ? '+' : ''}
-                      {Math.round(activeFeedback.mastery_delta * 100)}% → {Math.round(activeFeedback.p_mastery_after * 100)}%
-                    </span>
-                    {activeFeedback.understanding_level && (
-                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
-                        Level: {activeFeedback.understanding_level}
-                      </span>
-                    )}
-                  </div>
+                  {(() => {
+                    const before = Math.round(activeFeedback.p_mastery_before * 100);
+                    const after = Math.round(activeFeedback.p_mastery_after * 100);
+                    const delta = after - before;
+                    const sign = delta > 0 ? '+' : delta < 0 ? '−' : '±';
+                    return (
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-semibold text-slate-500">BKT Update:</span>
+                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md ${
+                          delta >= 0
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
+                            : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200'
+                        }`}>
+                          Mastery {before}% → {after}% ({sign}{Math.abs(delta)} points)
+                        </span>
+                        {activeFeedback.understanding_level && (
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
+                            Level: {activeFeedback.understanding_level}
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Explanation text */}
@@ -735,6 +824,34 @@ function QuizContent() {
               </div>
             </div>
 
+            {/* Separate Section Scores */}
+            {assessmentReport?.section_scores && assessmentReport.section_scores.length > 0 && (
+              <div className="pt-4 border-t border-indigo-800/60">
+                <p className="text-xs font-bold uppercase tracking-wider text-indigo-300 mb-3">
+                  Scores by Section
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {assessmentReport.section_scores.map((sec) => (
+                    <div key={sec.section_code} className="p-4 rounded-2xl bg-white/10 border border-white/10 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-white">{sec.section_name}</span>
+                        <span className="text-xs font-black text-indigo-200">{sec.accuracy_percentage}%</span>
+                      </div>
+                      <div className="w-full bg-white/15 h-2 rounded-full overflow-hidden">
+                        <div
+                          className="bg-indigo-400 h-full rounded-full"
+                          style={{ width: `${Math.min(100, sec.accuracy_percentage)}%` }}
+                        />
+                      </div>
+                      <p className="text-[11px] text-indigo-200">
+                        {sec.total_score} of {sec.max_score} pts ({sec.questions_answered} questions)
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Quick Actions */}
             <div className="pt-4 border-t border-indigo-800/60 flex flex-wrap items-center gap-3">
               <Link
@@ -748,6 +865,7 @@ function QuizContent() {
                 onClick={() => {
                   setSession(null);
                   setQuizFinished(false);
+                  setAssessmentReport(null);
                 }}
                 className="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition flex items-center gap-2 cursor-pointer"
               >
@@ -756,6 +874,167 @@ function QuizContent() {
               </button>
             </div>
           </div>
+
+          {/* Diagnostic Performance Comparison & Actionable Suggestions */}
+          {assessmentReport?.performance_comparison && assessmentReport.performance_comparison.has_comparison && (
+            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                      Cross-Section Diagnostic Insight
+                    </span>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                      {assessmentReport.performance_comparison.title}
+                    </h3>
+                  </div>
+                </div>
+
+                {assessmentReport.performance_comparison.mcq_score !== undefined && assessmentReport.performance_comparison.short_answer_score !== undefined && (
+                  <div className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
+                    <span>MCQ: {Math.round(assessmentReport.performance_comparison.mcq_score * 100)}%</span>
+                    <span>•</span>
+                    <span>Written: {Math.round(assessmentReport.performance_comparison.short_answer_score * 100)}%</span>
+                    {assessmentReport.performance_comparison.gap !== undefined && (
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold">
+                        Gap {Math.round(assessmentReport.performance_comparison.gap * 100)} pts
+                      </span>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 text-xs text-indigo-950 dark:text-indigo-200 leading-relaxed font-medium">
+                {assessmentReport.performance_comparison.diagnosis}
+              </div>
+
+              {/* Suggestions */}
+              <div className="space-y-2">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Targeted Suggestions for Improvement:
+                </h4>
+                <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                  {assessmentReport.performance_comparison.suggestions.map((s, idx) => (
+                    <li key={idx} className="flex items-start gap-2">
+                      <span className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                        {idx + 1}
+                      </span>
+                      <span>{s}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Case 1: Missing keywords and side-by-side answers */}
+              {assessmentReport.performance_comparison.side_by_side_answers && assessmentReport.performance_comparison.side_by_side_answers.length > 0 && (
+                <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Side-by-Side Model Comparison (Missing Key Concepts Highlighted):
+                  </h4>
+                  <div className="space-y-3">
+                    {assessmentReport.performance_comparison.side_by_side_answers.map((item, idx) => (
+                      <div key={idx} className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 space-y-2">
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{item.question}</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
+                            <span className="text-[10px] font-bold text-slate-400 uppercase block">Your Answer:</span>
+                            <p className="text-slate-700 dark:text-slate-300">{item.user_answer}</p>
+                          </div>
+                          <div className="p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 space-y-1">
+                            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase block">Model Answer:</span>
+                            <p className="text-emerald-900 dark:text-emerald-200">{item.model_answer}</p>
+                          </div>
+                        </div>
+                        {item.missing_keywords && item.missing_keywords.length > 0 && (
+                          <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                            <span className="text-[11px] font-medium text-slate-500">Missing concepts:</span>
+                            {item.missing_keywords.map((kw, i) => (
+                              <span key={i} className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 text-xs font-semibold">
+                                ✗ {kw}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Case 2: Partial Option Choices Analysis */}
+              {assessmentReport.performance_comparison.partial_picks_comparison && assessmentReport.performance_comparison.partial_picks_comparison.length > 0 && (
+                <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    Partial Distractor Analysis (Close Traps):
+                  </h4>
+                  <div className="space-y-3">
+                    {assessmentReport.performance_comparison.partial_picks_comparison.map((item, idx) => (
+                      <div key={idx} className="p-4 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/30 dark:bg-amber-950/20 space-y-2">
+                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{item.question}</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                          <div className="p-3 rounded-xl bg-amber-100/60 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 space-y-1">
+                            <span className="text-[10px] font-bold uppercase block">Your Choice (Partial):</span>
+                            <p>{item.chosen_partial_option}</p>
+                            <p className="text-[11px] font-medium text-amber-700 dark:text-amber-400 mt-1">
+                              <em>Missing nuance:</em> {item.missing_detail}
+                            </p>
+                          </div>
+                          <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 space-y-1">
+                            <span className="text-[10px] font-bold uppercase block">Fully Correct Option:</span>
+                            <p>{item.correct_option}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Practice Set Offer */}
+              {assessmentReport.performance_comparison.practice_questions && assessmentReport.performance_comparison.practice_questions.length > 0 && (
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                      Recommended Targeted Practice Set (3 Questions)
+                    </h4>
+                    <p className="text-[11px] text-slate-500">
+                      Targeted {assessmentReport.performance_comparison.practice_set_type === 'short_answer' ? 'written explanation' : 'multiple choice'} drill to close this diagnostic gap.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const practiceQuestions = assessmentReport.performance_comparison?.practice_questions || [];
+                      setSession({
+                        id: session?.id || 1,
+                        course_id: session?.course_id || 1,
+                        title: `Targeted Practice: ${assessmentReport.performance_comparison?.title}`,
+                        status: 'in_progress',
+                        difficulty_mode: 'adaptive',
+                        total_questions: practiceQuestions.length,
+                        is_diagnostic: false,
+                        started_at: new Date().toISOString(),
+                        questions: practiceQuestions
+                      });
+                      setCurrentIdx(0);
+                      setUserAnswer('');
+                      setActiveFeedback(null);
+                      setAnswersHistory([]);
+                      setQuizFinished(false);
+                      setAssessmentReport(null);
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                  >
+                    <PlayCircle className="w-4 h-4" />
+                    <span>Start 3-Question Practice Drill</span>
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Drill Breakdown & Remediation Links */}
           <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">

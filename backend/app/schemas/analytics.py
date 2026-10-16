@@ -38,6 +38,7 @@ class StudentDashboardSummary(BaseModel):
     total_study_sessions: int
     total_questions_answered: int
     overall_accuracy: float
+    mastery_threshold: float = 0.85
     weak_topics: List[TopicMasterySummary] = []
     strong_topics: List[TopicMasterySummary] = []
     upcoming_revisions: List[TopicMasterySummary] = []

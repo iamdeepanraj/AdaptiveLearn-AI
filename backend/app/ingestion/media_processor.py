@@ -6,8 +6,8 @@ from backend.app.config import settings
 logger = logging.getLogger(__name__)
 
 class MediaProcessor:
-    @staticmethod
-    def process_media(file_path: str) -> List[Dict[str, Any]]:
+    @classmethod
+    def process_media(cls, file_path: str) -> List[Dict[str, Any]]:
         """
         Transcribes speech from audio/video files and produces timestamped segments.
         Returns a list of segment dicts:
@@ -22,7 +22,10 @@ class MediaProcessor:
             raise FileNotFoundError(f"Media file not found at: {file_path}")
 
         filename = os.path.basename(file_path).lower()
-        
+
+        if filename.endswith((".vtt", ".srt")):
+            return cls._parse_transcript_file(file_path)
+
         # When OpenAI API key is available and configured for whisper
         if settings.STT_PROVIDER == "whisper_api" and settings.OPENAI_API_KEY:
             try:
@@ -70,3 +73,66 @@ class MediaProcessor:
 
         logger.info(f"Successfully processed lecture media: {file_path} into {len(segments)} timestamped segments.")
         return segments
+
+    @classmethod
+    def _parse_transcript_file(cls, file_path: str) -> List[Dict[str, Any]]:
+        """Parses WebVTT or SRT transcript files into timestamped text segments."""
+        import re
+        segments = []
+        try:
+            with open(file_path, "r", encoding="utf-8", errors="replace") as f:
+                content = f.read()
+
+            # Pattern for VTT/SRT timestamp line: HH:MM:SS.mmm --> HH:MM:SS.mmm or MM:SS.mmm --> MM:SS.mmm
+            time_pattern = re.compile(
+                r'(?:(\d{1,2}):)?(\d{2}):(\d{2})[.,](\d{3})\s*-->\s*(?:(\d{1,2}):)?(\d{2}):(\d{2})[.,](\d{3})'
+            )
+
+            blocks = re.split(r'\n\s*\n', content)
+            for block in blocks:
+                lines = [line.strip() for line in block.strip().split("\n") if line.strip()]
+                if not lines:
+                    continue
+
+                # Find the timestamp line
+                time_match = None
+                text_lines = []
+                for line in lines:
+                    match = time_pattern.search(line)
+                    if match:
+                        time_match = match
+                    elif not line.isdigit() and line != "WEBVTT":
+                        text_lines.append(line)
+
+                if time_match and text_lines:
+                    # Convert start timestamp to seconds
+                    sh, sm, ss = time_match.group(1), int(time_match.group(2)), int(time_match.group(3))
+                    start_sec = (int(sh) * 3600 if sh else 0) + sm * 60 + ss
+
+                    eh, em, es = time_match.group(5), int(time_match.group(6)), int(time_match.group(7))
+                    end_sec = (int(eh) * 3600 if eh else 0) + em * 60 + es
+
+                    text = " ".join(text_lines)
+                    segments.append({
+                        "timestamp_start_sec": start_sec,
+                        "timestamp_end_sec": max(end_sec, start_sec + 1),
+                        "text": text,
+                        "word_count": len(text.split())
+                    })
+
+            if not segments:
+                # Fallback: treat whole file as a 60-second segment
+                segments.append({
+                    "timestamp_start_sec": 0,
+                    "timestamp_end_sec": 60,
+                    "text": content[:1000].strip(),
+                    "word_count": len(content[:1000].split())
+                })
+        except Exception as e:
+            logger.warning(f"Error parsing transcript {file_path}: {e}")
+
+        logger.info(f"Parsed transcript {file_path} into {len(segments)} segments.")
+        return segments
+
+    process_transcript = process_media
+

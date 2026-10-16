@@ -120,18 +120,23 @@ class KeywordGrader:
         score = round(matched_weight / max(1e-6, total_weight), 3)
         score = min(1.0, max(0.0, score))
 
+        covered_clean = [c.rstrip(". ") for c in covered]
+        missed_clean = [m.rstrip(". ") for m in missed]
+
         if score >= 0.80:
             status = "correct"
             is_correct = True
-            feedback = f"Excellent! You accurately explained the key concepts: {', '.join(covered)}."
+            feedback = f"Excellent! You accurately explained the key concepts: {', '.join(covered_clean)}."
         elif score >= 0.50:
             status = "partial"
             is_correct = False
-            feedback = f"Partially correct. You covered {', '.join(covered)}, but missed key details on: {', '.join(missed)}."
+            feedback = f"Partially correct. You covered {', '.join(covered_clean)}, but missed key details on: {', '.join(missed_clean)}."
         else:
             status = "incorrect"
             is_correct = False
-            feedback = f"Incomplete explanation. Key missing concepts from the course material: {', '.join(missed)}."
+            feedback = f"Incomplete explanation. Key missing concepts from the course material: {', '.join(missed_clean)}."
+
+        feedback = re.sub(r'\.{2,}', '.', feedback.strip())
 
         return KeywordGradingResult(
             score=score,

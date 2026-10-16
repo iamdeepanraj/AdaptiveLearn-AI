@@ -105,6 +105,7 @@ export interface ChatMessage {
   citations: SourceCitation[];
   is_grounded: boolean;
   has_insufficient_evidence: boolean;
+  model_badge?: string;
   created_at: string;
 }
 
@@ -130,6 +131,8 @@ export interface QuestionStudentView {
   difficulty: string;
   question_text: string;
   options?: QuestionOption[];
+  section?: string;
+  section_code?: string;
 }
 
 export interface QuizSession {
@@ -198,6 +201,50 @@ export interface TopicBreakdown {
   status: 'strength' | 'developing' | 'weak';
 }
 
+export interface SectionScore {
+  section_code: string;
+  section_name: string;
+  questions_count: number;
+  questions_answered: number;
+  total_score: number;
+  max_score: number;
+  accuracy_percentage: number;
+}
+
+export interface PerformanceComparison {
+  has_comparison: boolean;
+  reason?: string;
+  mcq_score?: number;
+  short_answer_score?: number;
+  gap?: number;
+  diagnosis_category?: string;
+  title?: string;
+  diagnosis?: string;
+  suggestions: string[];
+  missing_key_terms: string[];
+  suggested_structure?: string;
+  side_by_side_answers: {
+    question: string;
+    user_answer: string;
+    model_answer: string;
+    missing_keywords: string[];
+    covered_keywords: string[];
+  }[];
+  partial_distractor_analysis?: {
+    partial_count: number;
+    total_mcqs: number;
+    partial_percentage: number;
+  };
+  partial_picks_comparison: {
+    question: string;
+    chosen_partial_option: string;
+    correct_option: string;
+    missing_detail: string;
+  }[];
+  practice_set_type?: string;
+  practice_questions: QuestionStudentView[];
+}
+
 export interface AssessmentReport {
   quiz_session_id: number;
   course_title: string;
@@ -209,6 +256,8 @@ export interface AssessmentReport {
   identified_misconceptions: string[];
   strengths: string[];
   recommended_next_steps: string[];
+  section_scores?: SectionScore[];
+  performance_comparison?: PerformanceComparison;
 }
 
 export interface TopicMastery {
@@ -250,6 +299,7 @@ export interface StudentDashboardData {
   total_study_sessions: number;
   total_questions_answered: number;
   overall_accuracy: number;
+  mastery_threshold?: number;
   weak_topics: TopicMastery[];
   strong_topics: TopicMastery[];
   upcoming_revisions: TopicMastery[];
@@ -338,6 +388,48 @@ export interface UnderstandingOverview {
   strengths: string[];
   plain_summary: string;
   remediation_sessions: RemediationSessionItem[];
+  mastery_threshold?: number;
+  latest_quiz_suggestion?: PerformanceComparison;
+}
+
+export interface FlashcardItem {
+  id: string;
+  topic_id: number;
+  topic_name: string;
+  front: string;
+  back: string;
+  card_type: 'definition' | 'formula' | 'key_fact';
+  document_id?: number;
+  document_name: string;
+  page?: number;
+  slide?: number;
+  timestamp?: number;
+  citation_text: string;
+}
+
+export interface FlashcardDeckResponse {
+  topic_id: number;
+  topic_name: string;
+  course_id: number;
+  cards: FlashcardItem[];
+}
+
+export interface FlashcardReviewResponse {
+  success: boolean;
+  topic_id: number;
+  p_mastery_before: number;
+  p_mastery_after: number;
+  mastery_delta: number;
+  message: string;
+}
+
+export interface ChatHealthResponse {
+  status: 'ready' | 'offline';
+  provider: string;
+  model_name: string;
+  model_badge: string;
+  fix_command?: string;
+  message?: string;
 }
 
 export interface RemediationStartData {
@@ -471,11 +563,90 @@ class ApiService {
   }
 
   // Tutor Chat
-  async sendChatMessage(data: { course_id: number; message: string; conversation_id?: number; topic_id?: number }): Promise<ChatMessage> {
+  async sendChatMessage(data: { course_id: number; message: string; conversation_id?: number; topic_id?: number; prioritized_document_id?: number }): Promise<ChatMessage> {
     return this.request<ChatMessage>('/chat', {
       method: 'POST',
       body: JSON.stringify(data),
     });
+  }
+
+  async streamChatMessage(
+    data: {
+      course_id: number;
+      message: string;
+      conversation_id?: number;
+      topic_id?: number;
+      prioritized_document_id?: number;
+    },
+    onToken: (token: string) => void,
+    onDone: (data: any) => void,
+    onError: (err: any) => void
+  ): Promise<void> {
+    const token = this.getToken();
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+
+    try {
+      const res = await fetch(`${API_BASE}/chat/stream`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(data),
+      });
+
+      if (!res.ok) {
+        let errText = `Error ${res.status}: ${res.statusText}`;
+        try {
+          const j = await res.json();
+          errText = j.detail || errText;
+        } catch {}
+        onError(new Error(errText));
+        return;
+      }
+
+      const reader = res.body?.getReader();
+      if (!reader) {
+        onError(new Error('ReadableStream not supported.'));
+        return;
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const blocks = buffer.split('\n\n');
+        buffer = blocks.pop() || '';
+
+        for (const block of blocks) {
+          const trimmed = block.trim();
+          if (!trimmed.startsWith('data: ')) continue;
+          const jsonStr = trimmed.slice(6);
+          try {
+            const parsed = JSON.parse(jsonStr);
+            if (parsed.event === 'token') {
+              onToken(parsed.token || '');
+            } else if (parsed.event === 'done') {
+              onDone(parsed);
+            } else if (parsed.event === 'error') {
+              onError(new Error(parsed.error || 'Chat stream error'));
+            }
+          } catch (e) {
+            // Ignore parse error on chunk
+          }
+        }
+      }
+    } catch (err) {
+      onError(err);
+    }
+  }
+
+  async getChatHealth(): Promise<ChatHealthResponse> {
+    return this.request<ChatHealthResponse>('/chat/health');
   }
 
   async getConversations(courseId: number): Promise<Conversation[]> {
@@ -484,6 +655,31 @@ class ApiService {
 
   async getConversation(id: number): Promise<Conversation> {
     return this.request<Conversation>(`/chat/conversations/${id}`);
+  }
+
+  async renameConversation(id: number, title: string): Promise<Conversation> {
+    return this.request<Conversation>(`/chat/conversations/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ title }),
+    });
+  }
+
+  async deleteConversation(id: number): Promise<{ success: boolean; id: number }> {
+    return this.request<{ success: boolean; id: number }>(`/chat/conversations/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Quick Revise Flashcards
+  async getFlashcards(courseId: number, topicId: number): Promise<FlashcardDeckResponse> {
+    return this.request<FlashcardDeckResponse>(`/courses/${courseId}/topics/${topicId}/flashcards`);
+  }
+
+  async reviewFlashcard(courseId: number, topicId: number, cardId: string, knewIt: boolean): Promise<FlashcardReviewResponse> {
+    return this.request<FlashcardReviewResponse>(`/courses/${courseId}/topics/${topicId}/flashcards/review`, {
+      method: 'POST',
+      body: JSON.stringify({ card_id: cardId, topic_id: topicId, knew_it: knewIt }),
+    });
   }
 
   // Health check

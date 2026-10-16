@@ -3,7 +3,7 @@ import numpy as np
 from sqlalchemy.orm import Session
 import logging
 
-from backend.app.models.document import DocumentChunk, Document
+from backend.app.models.document import DocumentChunk, Document, DocumentStatus
 from backend.app.schemas.document import SourceCitation
 
 logger = logging.getLogger(__name__)
@@ -21,9 +21,10 @@ class VectorStore:
     ) -> List[Dict[str, Any]]:
         """
         Retrieves top_k document chunks ordered by cosine similarity with metadata and source coordinates.
+        Only indexes chunks from documents whose status is INDEXED.
         """
         query = db.query(DocumentChunk, Document.filename).join(Document, DocumentChunk.document_id == Document.id)\
-            .filter(DocumentChunk.course_id == course_id)
+            .filter(DocumentChunk.course_id == course_id, Document.status == DocumentStatus.INDEXED)
 
         if topic_id:
             query = query.filter(DocumentChunk.topic_id == topic_id)

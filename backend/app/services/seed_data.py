@@ -10,6 +10,7 @@ from backend.app.models.learner import LearnerMastery, MasteryState, Recommendat
 from backend.app.auth import hash_password
 from backend.app.retrieval.embeddings import embedding_service
 from backend.app.assessment.verifier import QuestionVerifier
+from backend.app.assessment.generator import QuestionGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -547,11 +548,44 @@ def seed_database(db: Session):
             "correct": "Sequential token processing and vanishing gradients",
             "explanation": "As detailed in Attention_and_Transformers_Lecture.pptx (Slide 1), sequential processing forces O(N) steps causing gradient degradation across long distances.",
             "citations": [{"document_id": doc_pptx.id, "document_name": "Attention_and_Transformers_Lecture.pptx", "slide": 1, "quote": "Sequential token processing forces O(N) sequential steps, preventing parallel training across GPUs. Long-range context degradation persists..."}]
+        },
+        {
+            "topic_id": topics[0].id,
+            "type": QuestionType.SHORT_ANSWER,
+            "diff": DifficultyLevel.MEDIUM,
+            "text": "Explain the fundamental tradeoff in choosing the learning rate for gradient descent.",
+            "options": [
+                {"keyword": "divergence", "weight": 1.0, "synonyms": ["diverge", "overshooting", "unstable", "loss explodes"]},
+                {"keyword": "slow convergence", "weight": 1.0, "synonyms": ["slow training", "tiny steps", "slow", "sluggish"]},
+                {"keyword": "step size", "weight": 0.5, "synonyms": ["learning rate", "eta", "update magnitude"]}
+            ],
+            "correct": "A learning rate that is too large causes divergence or oscillation, whereas a learning rate that is too small results in excessively slow convergence.",
+            "explanation": "Neural_Networks_Fundamentals.pdf (Page 4): If the learning rate is too large, optimization diverges; if too small, convergence takes excessive epochs.",
+            "citations": [{"document_id": doc_pdf.id, "document_name": "Neural_Networks_Fundamentals.pdf", "page": 4, "quote": "The learning rate (eta) governs step magnitude. Excessive values trigger loss divergence, whereas undersized values cause sluggish convergence."}]
+        },
+        {
+            "topic_id": topics[2].id,
+            "type": QuestionType.SHORT_ANSWER,
+            "diff": DifficultyLevel.MEDIUM,
+            "text": "What are the two primary computational advantages of using parameter sharing and local receptive fields in CNNs?",
+            "options": [
+                {"keyword": "parameter reduction", "weight": 1.0, "synonyms": ["fewer weights", "memory efficiency", "reduced parameters", "fewer parameters"]},
+                {"keyword": "translation invariance", "weight": 1.0, "synonyms": ["spatial hierarchy", "shift invariance", "spatial invariance", "feature detection"]},
+                {"keyword": "receptive field", "weight": 0.5, "synonyms": ["local patch", "kernel", "filter window"]}
+            ],
+            "correct": "Parameter sharing drastically reduces parameter count and memory footprint, while local receptive fields enable learning spatial hierarchies and translation invariance.",
+            "explanation": "Neural_Networks_Fundamentals.pdf (Page 5): Convolutional weight sharing enforces parameter efficiency and translation invariance across visual inputs.",
+            "citations": [{"document_id": doc_pdf.id, "document_name": "Neural_Networks_Fundamentals.pdf", "page": 5, "quote": "Weight sharing across convolutional kernels significantly curtails parameter count and promotes translation invariance across the receptive fields."}]
         }
     ]
 
-
     for qd in questions_data:
+        # For MCQs: shuffle option content on server, assign ascending keys A, B, C, D
+        if qd["type"] == QuestionType.MCQ and qd.get("options"):
+            shuffled_opts, correct_key = QuestionGenerator.shuffle_and_rekey_options(qd["options"])
+            qd["options"] = shuffled_opts
+            qd["correct"] = correct_key
+
         fp = QuestionVerifier.generate_fingerprint(qd["text"])
         existing_q = db.query(Question).filter(Question.fingerprint == fp).first()
         if not existing_q:

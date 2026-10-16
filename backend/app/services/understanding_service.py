@@ -4,9 +4,10 @@ import logging
 
 from backend.app.models.learner import LearnerMastery, RemediationSession
 from backend.app.models.course import Topic, Course
-from backend.app.models.quiz import QuizResponse, Question
+from backend.app.models.quiz import QuizResponse, Question, QuizSession, QuizStatus
 from backend.app.learner.bkt import get_understanding_level, UNDERSTANDING_STRONG, UNDERSTANDING_DEVELOPING, UNDERSTANDING_WEAK, UNDERSTANDING_NOT_ASSESSED
 from backend.app.ai import get_llm
+from backend.app.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -178,6 +179,20 @@ class UnderstandingService:
             for s in remediation_sessions
         ]
 
+        # Retrieve latest quiz diagnostic suggestion
+        latest_quiz = db.query(QuizSession).filter(
+            QuizSession.user_id == user_id,
+            QuizSession.status == QuizStatus.COMPLETED
+        ).order_by(QuizSession.completed_at.desc()).first()
+
+        latest_quiz_suggestion = None
+        if latest_quiz and latest_quiz.assessment_report:
+            rep = latest_quiz.assessment_report
+            if isinstance(rep, dict):
+                comp = rep.get("performance_comparison")
+                if comp and comp.get("has_comparison"):
+                    latest_quiz_suggestion = comp
+
         return {
             "overall_level": overall_level,
             "overall_score": overall_score,
@@ -185,7 +200,9 @@ class UnderstandingService:
             "weak_concepts": weak_concepts_out,
             "strengths": strengths,
             "plain_summary": plain_summary,
-            "remediation_sessions": remediation_data
+            "remediation_sessions": remediation_data,
+            "mastery_threshold": settings.MASTERY_THRESHOLD,
+            "latest_quiz_suggestion": latest_quiz_suggestion
         }
 
     @staticmethod

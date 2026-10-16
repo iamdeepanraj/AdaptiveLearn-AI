@@ -78,7 +78,8 @@ class EvaluationRunner:
                 user_id=uid,
                 course_id=course.id,
                 message_text=query,
-                allow_outside_knowledge=False
+                allow_outside_knowledge=False,
+                save_to_db=False
             )
 
             answer = chat_msg.content or ""

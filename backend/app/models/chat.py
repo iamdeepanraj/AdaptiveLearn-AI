@@ -39,6 +39,7 @@ class ChatMessage(Base):
     citations = Column(JSON, default=list)
     is_grounded = Column(Boolean, default=True)
     has_insufficient_evidence = Column(Boolean, default=False)
+    model_badge = Column(String(100), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships

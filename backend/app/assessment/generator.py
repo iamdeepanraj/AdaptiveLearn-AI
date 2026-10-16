@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 from sqlalchemy.orm import Session
 import random
 import re
@@ -95,24 +95,85 @@ class QuestionGenerator:
             if diff_enum:
                 filtered = [q for q in available_pool if q.difficulty == diff_enum]
                 if len(filtered) >= target_count:
-                    return random.sample(filtered, target_count)
-            return random.sample(available_pool, min(len(available_pool), target_count))
+                    selected = random.sample(filtered, target_count)
+                else:
+                    selected = random.sample(available_pool, min(len(available_pool), target_count))
+            else:
+                # If balanced selection is possible across MCQ and Short Answer
+                if not question_types and len(available_pool) >= target_count:
+                    mcqs = [q for q in available_pool if q.question_type == QuestionType.MCQ]
+                    sas = [q for q in available_pool if q.question_type == QuestionType.SHORT_ANSWER]
+                    nums = [q for q in available_pool if q.question_type == QuestionType.NUMERICAL]
+                    take_mcq = min(len(mcqs), max(3, target_count // 2))
+                    take_sa = min(len(sas), max(3, target_count - take_mcq))
+                    take_num = min(len(nums), max(0, target_count - take_mcq - take_sa))
+                    selected = mcqs[:take_mcq] + sas[:take_sa] + nums[:take_num]
+                    # Fill any shortfall
+                    if len(selected) < target_count:
+                        rem = [q for q in available_pool if q not in selected]
+                        selected.extend(rem[:(target_count - len(selected))])
+                else:
+                    selected = random.sample(available_pool, min(len(available_pool), target_count))
+
+        # Always order questions by Section A (MCQ), Section B (Short Answer), Section C (Numerical)
+        type_priority = {
+            QuestionType.MCQ: 0,
+            QuestionType.SHORT_ANSWER: 1,
+            QuestionType.NUMERICAL: 2
+        }
+        selected.sort(key=lambda q: (type_priority.get(q.question_type, 9), q.id))
+        return selected
+
+    @staticmethod
+    def shuffle_and_rekey_options(options: List[Dict[str, Any]], seed: Optional[int] = None) -> Tuple[List[Dict[str, Any]], str]:
+        """
+        Shuffles option content on the server and assigns ascending keys A, B, C, D from top to bottom.
+        Returns the re-keyed options and the key of the correct option.
+        """
+        if not options:
+            return [], "A"
+        copied = [dict(o) for o in options]
+        rng = random.Random(seed) if seed is not None else random.Random()
+        rng.shuffle(copied)
+        correct_key = "A"
+        for idx, opt in enumerate(copied):
+            key = chr(65 + idx)
+            opt["key"] = key
+            if str(opt.get("label", "")).lower() == "correct":
+                correct_key = key
+        return copied, correct_key
 
     @staticmethod
     def format_student_safe_question(q: Question) -> QuestionStudentView:
         """
         Builds a student-safe question representation.
-        Shuffles MCQ options and strictly strips labels, scores, and correct answers.
+        Always displays letters in ascending order: A, B, C, D from top to bottom.
+        Strictly excludes labels, scores, rationales, and correct answers before submission.
+        Assigns explicit section metadata:
+        - Section A: Multiple choice
+        - Section B: Short answers
+        - Section C: Numerical problems
         """
+        if q.question_type == QuestionType.MCQ:
+            sec = "Section A: Multiple choice"
+            sec_code = "A"
+        elif q.question_type == QuestionType.SHORT_ANSWER:
+            sec = "Section B: Short answers"
+            sec_code = "B"
+        elif q.question_type == QuestionType.NUMERICAL:
+            sec = "Section C: Numerical problems"
+            sec_code = "C"
+        else:
+            sec = "Section A: Multiple choice"
+            sec_code = "A"
+
         opts = []
-        if q.options and isinstance(q.options, list):
-            # Shallow copy and shuffle options
-            shuffled_options = list(q.options)
-            random.shuffle(shuffled_options)
-            for idx, o in enumerate(shuffled_options):
+        if q.options and isinstance(q.options, list) and q.question_type == QuestionType.MCQ:
+            for idx, o in enumerate(q.options):
                 if isinstance(o, dict) and "text" in o:
                     key = o.get("key") or chr(65 + idx)
                     opts.append(QuestionOption(key=key, text=o["text"]))
+            opts.sort(key=lambda x: x.key)
 
         return QuestionStudentView(
             id=q.id,
@@ -121,7 +182,9 @@ class QuestionGenerator:
             question_type=q.question_type.value if hasattr(q.question_type, 'value') else str(q.question_type),
             difficulty=q.difficulty.value if hasattr(q.difficulty, 'value') else str(q.difficulty),
             question_text=q.question_text,
-            options=opts if opts else None
+            options=opts if opts else None,
+            section=sec,
+            section_code=sec_code
         )
 
     @staticmethod
