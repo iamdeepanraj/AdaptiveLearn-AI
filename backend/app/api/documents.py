@@ -68,7 +68,7 @@ def get_course_documents(
     if not course:
         raise HTTPException(status_code=404, detail="Course not found or access denied")
 
-    docs = db.query(Document).filter(Document.course_id == course_id, Document.uploader_id == current_user.id).order_by(Document.created_at.desc()).all()
+    docs = db.query(Document).filter(Document.course_id == course_id, Document.uploaded_by_id == current_user.id).order_by(Document.created_at.desc()).all()
     return docs
 
 @router.get("/{document_id}", response_model=DocumentResponse)
