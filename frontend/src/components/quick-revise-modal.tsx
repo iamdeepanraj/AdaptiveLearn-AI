@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  X, RotateCw, CheckCircle2, XCircle, Sparkles, BookOpen, 
-  ExternalLink, FileText, ChevronLeft, ChevronRight, Layers, Loader2 
+  X, RotateCw, CheckCircle2, XCircle, Sparkles, 
+  FileText, ChevronLeft, ChevronRight, Loader2 
 } from 'lucide-react';
 import { api, Topic, FlashcardItem, SourceCitation } from '@/lib/api';
 
@@ -22,7 +22,7 @@ export function QuickReviseModal({
   courseId,
   topics,
   initialTopicId,
-  onOpenCitation
+  onOpenCitation: _onOpenCitation,
 }: QuickReviseModalProps) {
   const [selectedTopicId, setSelectedTopicId] = useState<number | undefined>(initialTopicId);
   const [cards, setCards] = useState<FlashcardItem[]>([]);
@@ -73,7 +73,7 @@ export function QuickReviseModal({
       const res = await api.reviewFlashcard(courseId, selectedTopicId, currentCard.id, knewIt);
       setReviewFeedback(res.message);
       setReviewedCards((prev) => ({ ...prev, [currentCard.id]: knewIt }));
-    } catch (e) {
+    } catch {
       // ignore
     }
   };
@@ -97,22 +97,21 @@ export function QuickReviseModal({
   if (!isOpen) return null;
 
   const currentCard = cards[cardIdx];
-  const activeTopic = topics.find((t) => t.id === selectedTopicId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative w-full max-w-xl rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 sm:p-8 space-y-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="relative w-full max-w-xl rounded-3xl bg-surface border border-line shadow-card p-6 sm:p-8 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div className="flex items-center justify-between border-b border-line pb-4">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-xl bg-primary-soft text-primary-fg flex items-center justify-center">
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <h3 className="text-base font-bold text-fg flex items-center gap-2">
                 <span>Quick Revise Flashcards</span>
               </h3>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-fg-3">
                 Definitions, formulas & facts grounded strictly in course material
               </p>
             </div>
@@ -120,7 +119,8 @@ export function QuickReviseModal({
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+            aria-label="Close modal"
+            className="w-8 h-8 rounded-full hover:bg-surface-2 flex items-center justify-center text-fg-3 hover:text-fg transition cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -128,7 +128,7 @@ export function QuickReviseModal({
 
         {/* Topic Selector */}
         <div className="flex items-center justify-between gap-3">
-          <label className="text-xs font-semibold uppercase tracking-wider text-slate-500 shrink-0">
+          <label className="text-xs font-semibold uppercase tracking-wider text-fg-3 shrink-0">
             Topic:
           </label>
           <select
@@ -138,10 +138,10 @@ export function QuickReviseModal({
               setSelectedTopicId(id);
               loadDeck(id);
             }}
-            className="flex-1 text-xs px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-slate-200 font-medium"
+            className="flex-1 text-xs px-3.5 py-2 rounded-xl border border-line-strong bg-surface-2 text-fg font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
           >
             {topics.map((t) => (
-              <option key={t.id} value={t.id}>
+              <option key={t.id} value={t.id} className="bg-surface text-fg">
                 {t.name}
               </option>
             ))}
@@ -150,23 +150,23 @@ export function QuickReviseModal({
 
         {/* Card Content */}
         {loading ? (
-          <div className="py-20 text-center text-slate-400 flex flex-col items-center justify-center gap-3">
-            <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+          <div className="py-20 text-center text-fg-3 flex flex-col items-center justify-center gap-3">
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
             <p className="text-xs">Extracting grounded flashcards from course passages...</p>
           </div>
         ) : error ? (
-          <div className="p-4 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-rose-700 dark:text-rose-300 text-xs text-center">
+          <div className="p-4 rounded-xl bg-danger-soft border border-danger/30 text-danger text-xs text-center">
             {error}
           </div>
         ) : cards.length === 0 ? (
-          <div className="py-12 text-center text-slate-400 text-xs">
+          <div className="py-12 text-center text-fg-3 text-xs">
             No flashcards generated for this topic yet. Ensure course materials are uploaded.
           </div>
         ) : currentCard ? (
           <div className="space-y-4">
             {/* Card Progress */}
-            <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
-              <span className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-[10px] font-bold uppercase">
+            <div className="flex items-center justify-between text-xs text-fg-3 font-medium">
+              <span className="px-2.5 py-0.5 rounded-full bg-surface-2 text-fg-2 text-[10px] font-bold uppercase">
                 {currentCard.card_type}
               </span>
               <span>
@@ -177,24 +177,24 @@ export function QuickReviseModal({
             {/* Flashcard Body (Flip View) */}
             <div
               onClick={() => setIsFlipped(!isFlipped)}
-              className="min-h-[220px] p-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 flex flex-col justify-between cursor-pointer hover:border-indigo-400 transition select-none shadow-inner"
+              className="min-h-[220px] p-6 rounded-2xl border border-line bg-surface-2 flex flex-col justify-between cursor-pointer hover:border-line-strong transition select-none shadow-xs"
             >
               <div className="space-y-3">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 block">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-primary-fg block">
                   {isFlipped ? 'Answer / Explanation (Click to flip back)' : 'Concept / Question (Click to reveal answer)'}
                 </span>
-                <p className="text-sm sm:text-base font-semibold text-slate-900 dark:text-slate-100 leading-relaxed whitespace-pre-line">
+                <p className="text-sm sm:text-base font-semibold text-fg leading-relaxed whitespace-pre-line">
                   {isFlipped ? currentCard.back : currentCard.front}
                 </p>
               </div>
 
               {/* Source Grounding Citation */}
-              <div className="pt-3 border-t border-slate-200/60 dark:border-slate-700 flex items-center justify-between text-[11px] text-slate-500">
+              <div className="pt-3 border-t border-line flex items-center justify-between text-[11px] text-fg-3">
                 <span className="flex items-center gap-1.5">
-                  <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                  <FileText className="w-3.5 h-3.5 text-primary-fg" />
                   <span>{currentCard.citation_text}</span>
                 </span>
-                <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-bold flex items-center gap-1">
+                <span className="text-[10px] text-primary-fg font-bold flex items-center gap-1">
                   <RotateCw className="w-3 h-3" />
                   <span>{isFlipped ? 'Front' : 'Flip'}</span>
                 </span>
@@ -203,7 +203,7 @@ export function QuickReviseModal({
 
             {/* Review Feedback Banner */}
             {reviewFeedback && (
-              <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 text-center text-xs font-semibold text-indigo-700 dark:text-indigo-300 animate-in fade-in">
+              <div className="p-2.5 rounded-xl bg-primary-soft border border-primary/30 text-center text-xs font-semibold text-primary-fg animate-in fade-in">
                 {reviewFeedback}
               </div>
             )}
@@ -215,12 +215,12 @@ export function QuickReviseModal({
                 onClick={() => handleReview(false)}
                 className={`py-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                   reviewedCards[currentCard.id] === false
-                    ? 'border-rose-600 bg-rose-600 text-white shadow-xs'
-                    : 'border-rose-200 dark:border-rose-900/60 bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 hover:bg-rose-100'
+                    ? 'border-danger bg-danger text-white shadow-xs'
+                    : 'border-danger/30 bg-danger-soft text-danger hover:bg-danger-soft/80'
                 }`}
               >
                 <XCircle className="w-4 h-4" />
-                <span>Didn't know</span>
+                <span>Didn&apos;t know</span>
               </button>
 
               <button
@@ -228,8 +228,8 @@ export function QuickReviseModal({
                 onClick={() => handleReview(true)}
                 className={`py-3 rounded-xl border text-xs font-bold transition flex items-center justify-center gap-2 cursor-pointer ${
                   reviewedCards[currentCard.id] === true
-                    ? 'border-emerald-600 bg-emerald-600 text-white shadow-xs'
-                    : 'border-emerald-200 dark:border-emerald-900/60 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100'
+                    ? 'border-success bg-success text-white shadow-xs'
+                    : 'border-success/30 bg-success-soft text-success hover:bg-success-soft/80'
                 }`}
               >
                 <CheckCircle2 className="w-4 h-4" />
@@ -243,7 +243,7 @@ export function QuickReviseModal({
                 type="button"
                 disabled={cardIdx === 0}
                 onClick={handlePrev}
-                className="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 flex items-center gap-1 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg border border-line bg-surface-2 text-xs font-semibold text-fg-2 hover:bg-surface-3 hover:text-fg disabled:opacity-40 flex items-center gap-1 cursor-pointer"
               >
                 <ChevronLeft className="w-3.5 h-3.5" />
                 <span>Previous</span>
@@ -253,7 +253,7 @@ export function QuickReviseModal({
                 type="button"
                 disabled={cardIdx + 1 >= cards.length}
                 onClick={handleNext}
-                className="px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40 flex items-center gap-1 cursor-pointer"
+                className="px-3.5 py-1.5 rounded-lg border border-line bg-surface-2 text-xs font-semibold text-fg-2 hover:bg-surface-3 hover:text-fg disabled:opacity-40 flex items-center gap-1 cursor-pointer"
               >
                 <span>Next</span>
                 <ChevronRight className="w-3.5 h-3.5" />

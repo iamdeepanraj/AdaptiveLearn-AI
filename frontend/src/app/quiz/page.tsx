@@ -1,19 +1,17 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { 
   PlayCircle, CheckCircle2, XCircle, AlertTriangle, Sparkles, ArrowRight, 
-  HelpCircle, Award, FileText, ExternalLink, RefreshCw, BookOpen, RotateCcw,
-  Check, ListFilter, Hash, MessageSquare, Layers, Clock
+  Award, FileText, ExternalLink, RotateCcw,
+  Check, ListFilter, Hash, MessageSquare, Layers
 } from 'lucide-react';
-import { api, Course, Topic, QuizSession, QuizResponseResult, SourceCitation, AssessmentReport, QuestionStudentView } from '@/lib/api';
-import { BKTBadge } from '@/components/bkt-badge';
+import { api, Course, QuizSession, QuizResponseResult, SourceCitation, AssessmentReport, QuestionStudentView } from '@/lib/api';
 import { SourcePreviewModal } from '@/components/source-preview-modal';
 
 function QuizContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const queryCourseId = searchParams.get('course_id');
   const queryTopicId = searchParams.get('topic_id');
@@ -184,7 +182,7 @@ function QuizContent() {
   };
 
   // Sections derived from session questions
-  const sections = React.useMemo(() => {
+  const sections = useMemo(() => {
     if (!session?.questions) return [];
     const secA = session.questions
       .map((q, idx) => ({ q, idx }))
@@ -204,12 +202,12 @@ function QuizContent() {
   }, [session?.questions]);
 
   // Active section based on currentIdx
-  const activeSection = React.useMemo(() => {
+  const activeSection = useMemo(() => {
     if (!sections.length) return null;
     return sections.find((s) => s.items.some((item) => item.idx === currentIdx)) || sections[0];
   }, [sections, currentIdx]);
 
-  const activeSectionAnsweredCount = React.useMemo(() => {
+  const activeSectionAnsweredCount = useMemo(() => {
     if (!activeSection) return 0;
     return activeSection.items.filter((item) => answersHistory.some((h) => h.question_id === item.q.id)).length;
   }, [activeSection, answersHistory]);
@@ -220,20 +218,23 @@ function QuizContent() {
   const getShortAnswerBadge = (score: number) => {
     if (score >= 0.8) {
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-          Correct (Score: {Math.round(score * 100)}%)
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-success-soft text-success border border-success/30">
+          <CheckCircle2 className="w-3.5 h-3.5" />
+          <span>Correct (Score: {Math.round(score * 100)}%)</span>
         </span>
       );
     } else if (score >= 0.5) {
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
-          Partially Correct (Score: {Math.round(score * 100)}%)
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-warning-soft text-warning border border-warning/30">
+          <AlertTriangle className="w-3.5 h-3.5" />
+          <span>Partly correct (Score: {Math.round(score * 100)}%)</span>
         </span>
       );
     } else {
       return (
-        <span className="px-2.5 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300">
-          Incorrect (Score: {Math.round(score * 100)}%)
+        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold bg-danger-soft text-danger border border-danger/30">
+          <XCircle className="w-3.5 h-3.5" />
+          <span>Incorrect (Score: {Math.round(score * 100)}%)</span>
         </span>
       );
     }
@@ -245,36 +246,36 @@ function QuizContent() {
       {!session && !quizFinished && (
         <div className="space-y-6">
           <div className="text-center max-w-xl mx-auto space-y-2">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-indigo-600 text-white shadow-md shadow-indigo-600/30 mb-2">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-primary text-white shadow-card mb-2">
               <PlayCircle className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-fg tracking-tight">
               Adaptive Practice & Diagnostic Drills
             </h1>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-xs text-fg-3 leading-relaxed">
               Design a custom drill from your uploaded materials. Each response is graded with precision (graded options, keyword matching, safe expression checks) and updates your Bayesian Knowledge Tracing profile.
             </p>
           </div>
 
-          <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6 max-w-2xl mx-auto">
+          <div className="p-8 rounded-3xl bg-surface border border-line shadow-card space-y-6 max-w-2xl mx-auto">
             {error && (
-              <div className="p-3.5 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 text-xs text-rose-600 font-medium text-center">
+              <div className="p-3.5 rounded-xl bg-danger-soft border border-danger/30 text-xs text-danger font-medium text-center">
                 {error}
               </div>
             )}
 
             {/* Course Selector */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-fg-3 mb-2">
                 Course Material
               </label>
               <select
                 value={selectedCourseId}
                 onChange={(e) => handleCourseChange(Number(e.target.value))}
-                className="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-sm font-medium"
+                className="w-full px-4 py-2.5 rounded-xl border border-line-strong bg-surface-2 text-fg text-sm font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
               >
                 {courses.map((c) => (
-                  <option key={c.id} value={c.id}>
+                  <option key={c.id} value={c.id} className="bg-surface text-fg">
                     {c.code}: {c.title}
                   </option>
                 ))}
@@ -285,7 +286,7 @@ function QuizContent() {
             {currentTopics.length > 0 && (
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-fg-3">
                     Target Topics
                   </label>
                   <button
@@ -297,7 +298,7 @@ function QuizContent() {
                         setSelectedTopicIds(currentTopics.map((t) => t.id));
                       }
                     }}
-                    className="text-xs text-indigo-600 hover:text-indigo-700 font-semibold cursor-pointer"
+                    className="text-xs text-primary-fg hover:underline font-semibold cursor-pointer"
                   >
                     {selectedTopicIds.length === currentTopics.length ? 'Deselect All' : 'Select All'}
                   </button>
@@ -312,12 +313,12 @@ function QuizContent() {
                         onClick={() => toggleTopic(topic.id)}
                         className={`p-3 rounded-xl border text-left transition flex items-center justify-between cursor-pointer ${
                           isChecked
-                            ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 font-medium'
-                            : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400'
+                            ? 'border-primary bg-primary-soft text-primary-fg font-medium'
+                            : 'border-line bg-surface-2 text-fg-2 hover:text-fg'
                         }`}
                       >
                         <span className="text-xs truncate">{topic.name}</span>
-                        {isChecked && <Check className="w-4 h-4 text-indigo-600 shrink-0 ml-2" />}
+                        {isChecked && <Check className="w-4 h-4 text-primary-fg shrink-0 ml-2" />}
                       </button>
                     );
                   })}
@@ -327,7 +328,7 @@ function QuizContent() {
 
             {/* Question Types */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-fg-3 mb-2">
                 Assessment Types
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
@@ -360,16 +361,16 @@ function QuizContent() {
                       onClick={() => toggleQuestionType(qt.id)}
                       className={`p-3 rounded-xl border text-left transition cursor-pointer ${
                         isSelected
-                          ? 'border-indigo-600 bg-indigo-50/80 dark:bg-indigo-950/50 text-indigo-900 dark:text-indigo-200 shadow-2xs'
-                          : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-500 hover:bg-slate-100'
+                          ? 'border-primary bg-primary-soft text-primary-fg shadow-xs font-semibold'
+                          : 'border-line bg-surface-2 text-fg-2 hover:text-fg'
                       }`}
                     >
                       <div className="flex items-center justify-between mb-1">
-                        <Icon className={`w-4 h-4 ${isSelected ? 'text-indigo-600' : 'text-slate-400'}`} />
-                        {isSelected && <Check className="w-3.5 h-3.5 text-indigo-600" />}
+                        <Icon className={`w-4 h-4 ${isSelected ? 'text-primary-fg' : 'text-fg-3'}`} />
+                        {isSelected && <Check className="w-3.5 h-3.5 text-primary-fg" />}
                       </div>
                       <span className="text-xs font-bold block">{qt.label}</span>
-                      <span className="text-[10px] text-slate-500 block mt-0.5">{qt.desc}</span>
+                      <span className={`text-[10px] block mt-0.5 ${isSelected ? 'text-primary-fg' : 'text-fg-2'}`}>{qt.desc}</span>
                     </button>
                   );
                 })}
@@ -378,7 +379,7 @@ function QuizContent() {
 
             {/* Difficulty Calibration Mode */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-fg-3 mb-2">
                 Difficulty Calibration Mode
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -394,12 +395,12 @@ function QuizContent() {
                     onClick={() => setDifficultyMode(mode.id)}
                     className={`p-3 rounded-xl border text-left transition cursor-pointer ${
                       difficultyMode === mode.id
-                        ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-semibold'
-                        : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-800 text-slate-600 hover:bg-slate-50'
+                        ? 'border-primary bg-primary-soft text-primary-fg font-semibold'
+                        : 'border-line bg-surface-2 text-fg-2 hover:text-fg'
                     }`}
                   >
                     <span className="text-xs font-bold block">{mode.label}</span>
-                    <span className="text-[10px] text-slate-400 block mt-0.5">{mode.desc}</span>
+                    <span className={`text-[10px] block mt-0.5 ${difficultyMode === mode.id ? 'text-primary-fg' : 'text-fg-2'}`}>{mode.desc}</span>
                   </button>
                 ))}
               </div>
@@ -407,7 +408,7 @@ function QuizContent() {
 
             {/* Question Count */}
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-fg-3 mb-2">
                 Questions per Session
               </label>
               <div className="flex items-center gap-2">
@@ -418,8 +419,8 @@ function QuizContent() {
                     onClick={() => setQuestionCount(n)}
                     className={`flex-1 py-2 rounded-xl text-xs font-bold border transition cursor-pointer ${
                       questionCount === n
-                        ? 'border-indigo-600 bg-indigo-600 text-white shadow-xs'
-                        : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800 text-slate-600 hover:bg-slate-100'
+                        ? 'border-primary bg-primary text-white shadow-xs'
+                        : 'border-line bg-surface-2 text-fg hover:bg-surface-3'
                     }`}
                   >
                     {n} Questions
@@ -431,7 +432,7 @@ function QuizContent() {
             <button
               onClick={handleStartQuiz}
               disabled={loading || selectedQuestionTypes.length === 0}
-              className="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-600/30 transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              className="w-full py-3.5 rounded-2xl bg-primary hover:bg-primary-hover text-white font-semibold text-sm shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -446,12 +447,12 @@ function QuizContent() {
         </div>
       )}
 
-      {/* 2. Active Question Runner (one question at a time with instant feedback) */}
+      {/* 2. Active Question Runner */}
       {session && !quizFinished && (
         <div className="space-y-6">
           {/* Section Navigation Tabs */}
           {sections.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-3">
+            <div className="flex flex-wrap items-center gap-2 border-b border-line pb-3">
               {sections.map((sec) => {
                 const isCurrent = activeSection?.code === sec.code;
                 const answeredInSec = sec.items.filter((it) => answersHistory.some((h) => h.question_id === it.q.id)).length;
@@ -460,21 +461,20 @@ function QuizContent() {
                     key={sec.code}
                     type="button"
                     onClick={() => {
-                      // Jump to first unanswered question in section, or first question in section
                       const unanswered = sec.items.find((it) => !answersHistory.some((h) => h.question_id === it.q.id));
                       setCurrentIdx(unanswered ? unanswered.idx : sec.items[0].idx);
                       setActiveFeedback(null);
                       setUserAnswer('');
                     }}
-                    className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer ${
+                    className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-2 cursor-pointer border ${
                       isCurrent
-                        ? 'bg-indigo-600 text-white shadow-sm'
-                        : 'bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300'
+                        ? 'bg-primary-soft text-primary-fg border-primary shadow-xs font-bold'
+                        : 'bg-surface-2 text-fg-2 border-line hover:text-fg hover:bg-surface-3'
                     }`}
                   >
                     <span>{sec.title}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                      isCurrent ? 'bg-indigo-500 text-white' : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                      isCurrent ? 'bg-primary text-white' : 'bg-surface-3 text-fg-2'
                     }`}>
                       {answeredInSec}/{sec.items.length}
                     </span>
@@ -488,33 +488,33 @@ function QuizContent() {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <span className="text-xs font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                <span className="text-xs font-bold uppercase tracking-wider text-primary-fg">
                   {activeSection?.title || 'Section'} • Question {currentIdx + 1} of {session.total_questions}
                 </span>
-                <span className="text-xs text-slate-400">•</span>
-                <span className="text-xs font-medium text-slate-600 dark:text-slate-300">
+                <span className="text-xs text-fg-3">•</span>
+                <span className="text-xs font-medium text-fg">
                   {currentQ?.topic_name}
                 </span>
-                <span className="text-xs text-slate-400">•</span>
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase">
+                <span className="text-xs text-fg-3">•</span>
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-surface-2 text-fg-2 uppercase border border-line">
                   {currentQ?.question_type.replace('_', ' ')}
                 </span>
               </div>
 
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 uppercase">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-surface-2 text-fg-2 uppercase border border-line">
                 {currentQ?.difficulty}
               </span>
             </div>
 
             {/* Per-Section Progress Bar */}
             <div className="space-y-1">
-              <div className="flex items-center justify-between text-[11px] text-slate-500">
+              <div className="flex items-center justify-between text-[11px] text-fg-3">
                 <span>{activeSection?.title} Progress</span>
                 <span>{activeSectionAnsweredCount} of {activeSection?.items.length || 1} Answered</span>
               </div>
-              <div className="w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-surface-2 h-2 rounded-full overflow-hidden border border-line">
                 <div
-                  className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-primary h-2 rounded-full transition-all duration-300"
                   style={{ width: `${(activeSectionAnsweredCount / Math.max(1, activeSection?.items.length || 1)) * 100}%` }}
                 />
               </div>
@@ -522,40 +522,80 @@ function QuizContent() {
           </div>
 
           {/* Question Card */}
-          <div className="p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl space-y-6">
-            <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100 leading-relaxed">
+          <div className="p-8 rounded-3xl bg-surface border border-line shadow-card space-y-6">
+            <h2 className="text-lg sm:text-xl font-bold text-fg leading-relaxed">
               {currentQ?.question_text}
             </h2>
 
             {/* Answer Form by Type */}
             {currentQ?.question_type === 'mcq' && currentQ.options ? (
               <div className="space-y-3">
-                {currentQ.options.map((opt) => (
-                  <button
-                    key={opt.key}
-                    type="button"
-                    disabled={activeFeedback !== null}
-                    onClick={() => setUserAnswer(opt.key)}
-                    className={`w-full p-4 rounded-2xl border text-left transition flex items-center gap-3.5 cursor-pointer ${
-                      userAnswer === opt.key
-                        ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-200 font-semibold'
-                        : 'border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800/60 text-slate-800 dark:text-slate-200 hover:border-slate-300'
-                    }`}
-                  >
-                    <span className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
-                      userAnswer === opt.key
-                        ? 'bg-indigo-600 text-white'
-                        : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
-                    }`}>
-                      {opt.key}
-                    </span>
-                    <span className="text-sm leading-relaxed">{opt.text}</span>
-                  </button>
-                ))}
+                {currentQ.options.map((opt) => {
+                  const isSelected = userAnswer === opt.key;
+                  // If answered, check feedback styling
+                  let optionClass = 'border-line bg-surface-2 text-fg hover:border-line-strong';
+                  let statusTag: React.ReactNode = null;
+
+                  if (activeFeedback) {
+                    if (isSelected) {
+                      if (activeFeedback.option_label === 'correct') {
+                        optionClass = 'bg-success-soft border-success text-success';
+                        statusTag = (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-success ml-auto">
+                            <CheckCircle2 className="w-4 h-4" /> Correct
+                          </span>
+                        );
+                      } else if (activeFeedback.option_label === 'partial') {
+                        optionClass = 'bg-warning-soft border-warning text-warning';
+                        statusTag = (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-warning ml-auto">
+                            <AlertTriangle className="w-4 h-4" /> Partly correct
+                          </span>
+                        );
+                      } else {
+                        optionClass = 'bg-danger-soft border-danger text-danger';
+                        statusTag = (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold text-danger ml-auto">
+                            <XCircle className="w-4 h-4" /> Incorrect
+                          </span>
+                        );
+                      }
+                    } else if (activeFeedback.revealed_options?.find((ro) => ro.key === opt.key)?.label === 'correct') {
+                      optionClass = 'bg-success-soft/50 border-success/60 text-fg';
+                      statusTag = (
+                        <span className="inline-flex items-center gap-1 text-xs font-bold text-success ml-auto">
+                          <CheckCircle2 className="w-4 h-4" /> Correct
+                        </span>
+                      );
+                    }
+                  } else if (isSelected) {
+                    optionClass = 'bg-primary-soft border-primary text-primary-fg font-semibold';
+                  }
+
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      disabled={activeFeedback !== null}
+                      onClick={() => setUserAnswer(opt.key)}
+                      className={`w-full p-4 rounded-2xl border text-left transition flex items-center gap-3.5 cursor-pointer ${optionClass}`}
+                    >
+                      <span className={`w-7 h-7 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                        isSelected && !activeFeedback
+                          ? 'bg-primary text-white'
+                          : 'bg-surface border border-line text-fg'
+                      }`}>
+                        {opt.key}
+                      </span>
+                      <span className="text-sm leading-relaxed">{opt.text}</span>
+                      {statusTag}
+                    </button>
+                  );
+                })}
               </div>
             ) : currentQ?.question_type === 'numerical' ? (
               <div className="space-y-3">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <label className="text-xs font-semibold uppercase tracking-wider text-fg-3">
                   Enter Calculated Result (Deterministic AST tolerance verification):
                 </label>
                 <input
@@ -564,15 +604,15 @@ function QuizContent() {
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
                   placeholder="e.g. 0.0225"
-                  className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                  className="w-full px-4 py-3 rounded-xl border border-line-strong bg-surface-2 text-fg text-sm font-medium focus:ring-2 focus:ring-focus placeholder:text-fg-3"
                 />
-                <p className="text-[11px] text-slate-400">
+                <p className="text-[11px] text-fg-3">
                   Tip: Round to standard decimal places if needed. Units are evaluated automatically.
                 </p>
               </div>
             ) : (
               <div className="space-y-3">
-                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <label className="text-xs font-semibold uppercase tracking-wider text-fg-3">
                   Short Answer Explanation (Evaluated against model answer keywords & paraphrase semantics):
                 </label>
                 <textarea
@@ -581,7 +621,7 @@ function QuizContent() {
                   value={userAnswer}
                   onChange={(e) => setUserAnswer(e.target.value)}
                   placeholder="Explain the concept using your own words, referencing key mechanisms..."
-                  className="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-sm font-medium focus:ring-2 focus:ring-indigo-500"
+                  className="w-full p-4 rounded-xl border border-line-strong bg-surface-2 text-fg text-sm font-medium focus:ring-2 focus:ring-focus placeholder:text-fg-3"
                 />
               </div>
             )}
@@ -591,7 +631,7 @@ function QuizContent() {
               <button
                 onClick={handleSubmitAnswer}
                 disabled={!userAnswer.trim() || isSubmitting}
-                className="w-full py-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm shadow-md shadow-indigo-600/30 transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                className="w-full py-3.5 rounded-2xl bg-primary hover:bg-primary-hover text-white font-semibold text-sm shadow-xs transition disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -605,24 +645,24 @@ function QuizContent() {
             {activeFeedback && (
               <div className={`p-6 rounded-2xl border space-y-5 animate-in fade-in duration-300 ${
                 activeFeedback.score_awarded >= 0.8
-                  ? 'bg-emerald-50/60 border-emerald-200 dark:bg-emerald-950/20 dark:border-emerald-900'
+                  ? 'bg-success-soft border-success text-fg'
                   : activeFeedback.score_awarded >= 0.5
-                  ? 'bg-amber-50/60 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900'
-                  : 'bg-rose-50/60 border-rose-200 dark:bg-rose-950/20 dark:border-rose-900'
+                  ? 'bg-warning-soft border-warning text-fg'
+                  : 'bg-danger-soft border-danger text-fg'
               }`}>
                 {/* Header status line */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
                     {activeFeedback.score_awarded >= 0.8 ? (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                      <CheckCircle2 className="w-5 h-5 text-success shrink-0" />
                     ) : activeFeedback.score_awarded >= 0.5 ? (
-                      <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+                      <AlertTriangle className="w-5 h-5 text-warning shrink-0" />
                     ) : (
-                      <XCircle className="w-5 h-5 text-rose-600 shrink-0" />
+                      <XCircle className="w-5 h-5 text-danger shrink-0" />
                     )}
 
                     <div>
-                      <span className="font-bold text-sm text-slate-900 dark:text-slate-100">
+                      <span className="font-bold text-sm text-fg">
                         {currentQ?.question_type === 'mcq' ? (
                           activeFeedback.option_label === 'correct' ? 'Fully Correct (Score: 1.0)' :
                           activeFeedback.option_label === 'partial' ? 'Partially Correct (Score: 0.5)' :
@@ -644,16 +684,16 @@ function QuizContent() {
                     const sign = delta > 0 ? '+' : delta < 0 ? '−' : '±';
                     return (
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-semibold text-slate-500">BKT Update:</span>
-                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md ${
+                        <span className="text-[11px] font-semibold text-fg-3">BKT Update:</span>
+                        <span className={`text-xs font-bold px-2.5 py-0.5 rounded-md border ${
                           delta >= 0
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
-                            : 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200'
+                            ? 'bg-success-soft text-success border-success/30'
+                            : 'bg-danger-soft text-danger border-danger/30'
                         }`}>
                           Mastery {before}% → {after}% ({sign}{Math.abs(delta)} points)
                         </span>
                         {activeFeedback.understanding_level && (
-                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-primary-soft text-primary-fg border border-primary/30">
                             Level: {activeFeedback.understanding_level}
                           </span>
                         )}
@@ -663,15 +703,15 @@ function QuizContent() {
                 </div>
 
                 {/* Explanation text */}
-                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                <p className="text-xs text-fg leading-relaxed">
                   {activeFeedback.feedback}
                 </p>
 
                 {/* Graded MCQ Specifics: Missing Detail or Misconception */}
                 {activeFeedback.option_label === 'partial' && activeFeedback.missing_detail && (
-                  <div className="p-3.5 rounded-xl bg-amber-100/70 dark:bg-amber-950/40 border border-amber-300/60 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 space-y-1">
-                    <p className="font-bold flex items-center gap-1.5">
-                      <AlertTriangle className="w-4 h-4 text-amber-600" />
+                  <div className="p-3.5 rounded-xl bg-warning-soft border border-warning text-xs text-fg space-y-1">
+                    <p className="font-bold flex items-center gap-1.5 text-warning">
+                      <AlertTriangle className="w-4 h-4" />
                       <span>Missing Critical Nuance:</span>
                     </p>
                     <p>{activeFeedback.missing_detail}</p>
@@ -679,9 +719,9 @@ function QuizContent() {
                 )}
 
                 {activeFeedback.option_label === 'wrong' && activeFeedback.misconception_tag && (
-                  <div className="p-3.5 rounded-xl bg-rose-100/70 dark:bg-rose-950/40 border border-rose-300/60 dark:border-rose-800 text-xs text-rose-900 dark:text-rose-200 space-y-1">
-                    <p className="font-bold flex items-center gap-1.5">
-                      <XCircle className="w-4 h-4 text-rose-600" />
+                  <div className="p-3.5 rounded-xl bg-danger-soft border border-danger text-xs text-fg space-y-1">
+                    <p className="font-bold flex items-center gap-1.5 text-danger">
+                      <XCircle className="w-4 h-4" />
                       <span>Identified Conceptual Misconception:</span>
                     </p>
                     <p>{activeFeedback.misconception_tag}</p>
@@ -690,15 +730,15 @@ function QuizContent() {
 
                 {/* Short Answer Keyword Coverage Breakdown */}
                 {currentQ?.question_type === 'short_answer' && (activeFeedback.covered_keywords || activeFeedback.missing_keywords) && (
-                  <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 space-y-2.5">
-                    <p className="text-xs font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                  <div className="p-4 rounded-xl bg-surface-2 border border-line space-y-2.5">
+                    <p className="text-xs font-bold text-fg uppercase tracking-wider">
                       Keyword & Concept Analysis:
                     </p>
                     {activeFeedback.covered_keywords && activeFeedback.covered_keywords.length > 0 && (
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[11px] font-medium text-slate-500">Covered Ideas:</span>
+                        <span className="text-[11px] font-medium text-fg-3">Covered Ideas:</span>
                         {activeFeedback.covered_keywords.map((kw, idx) => (
-                          <span key={idx} className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300 text-xs font-semibold">
+                          <span key={idx} className="px-2 py-0.5 rounded-md bg-success-soft text-success border border-success/30 text-xs font-semibold">
                             ✓ {kw}
                           </span>
                         ))}
@@ -706,9 +746,9 @@ function QuizContent() {
                     )}
                     {activeFeedback.missing_keywords && activeFeedback.missing_keywords.length > 0 && (
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[11px] font-medium text-slate-500">Missing Ideas:</span>
+                        <span className="text-[11px] font-medium text-fg-3">Missing Ideas:</span>
                         {activeFeedback.missing_keywords.map((kw, idx) => (
-                          <span key={idx} className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300 text-xs font-semibold">
+                          <span key={idx} className="px-2 py-0.5 rounded-md bg-danger-soft text-danger border border-danger/30 text-xs font-semibold">
                             ✗ {kw}
                           </span>
                         ))}
@@ -719,8 +759,8 @@ function QuizContent() {
 
                 {/* Revealed Options Breakdown for Graded MCQs */}
                 {activeFeedback.revealed_options && activeFeedback.revealed_options.length > 0 && (
-                  <div className="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
-                    <p className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                  <div className="pt-2 border-t border-line space-y-2">
+                    <p className="text-xs font-bold text-fg">
                       Option Diagnostics Breakdown:
                     </p>
                     <div className="space-y-2">
@@ -729,10 +769,10 @@ function QuizContent() {
                           key={i}
                           className={`p-3 rounded-xl border text-xs space-y-1 ${
                             opt.label === 'correct'
-                              ? 'bg-emerald-50/70 border-emerald-200 dark:bg-emerald-950/30 dark:border-emerald-900 text-emerald-950 dark:text-emerald-200'
+                              ? 'bg-success-soft border-success text-fg'
                               : opt.label === 'partial'
-                              ? 'bg-amber-50/70 border-amber-200 dark:bg-amber-950/30 dark:border-amber-900 text-amber-950 dark:text-amber-200'
-                              : 'bg-slate-50 border-slate-200 dark:bg-slate-800/60 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                              ? 'bg-warning-soft border-warning text-fg'
+                              : 'bg-surface-2 border-line text-fg'
                           }`}
                         >
                           <div className="flex items-center justify-between">
@@ -741,16 +781,16 @@ function QuizContent() {
                             </span>
                             <span className={`text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full ${
                               opt.label === 'correct'
-                                ? 'bg-emerald-200 text-emerald-900 dark:bg-emerald-900 dark:text-emerald-200'
+                                ? 'bg-success text-white'
                                 : opt.label === 'partial'
-                                ? 'bg-amber-200 text-amber-900 dark:bg-amber-900 dark:text-amber-200'
-                                : 'bg-slate-200 text-slate-800 dark:bg-slate-700 dark:text-slate-300'
+                                ? 'bg-warning text-white'
+                                : 'bg-surface-3 text-fg'
                             }`}>
                               {opt.label} ({opt.score} pts)
                             </span>
                           </div>
                           {opt.rationale && (
-                            <p className="text-[11px] text-slate-600 dark:text-slate-400">
+                            <p className="text-[11px] text-fg-2">
                               <em>Rationale:</em> {opt.rationale}
                             </p>
                           )}
@@ -762,13 +802,13 @@ function QuizContent() {
 
                 {/* Grounded Citation References */}
                 {activeFeedback.feedback_citations && activeFeedback.feedback_citations.length > 0 && (
-                  <div className="pt-2 border-t border-slate-200/60 dark:border-slate-800 flex flex-wrap items-center gap-2">
-                    <span className="text-[11px] font-semibold text-slate-500">Source Passage:</span>
+                  <div className="pt-2 border-t border-line flex flex-wrap items-center gap-2">
+                    <span className="text-[11px] font-semibold text-fg-3">Source Passage:</span>
                     {activeFeedback.feedback_citations.map((c, i) => (
                       <button
                         key={i}
                         onClick={() => setActiveCitation(c)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-medium text-indigo-600 hover:text-indigo-700 shadow-2xs transition cursor-pointer"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-surface border border-line text-xs font-medium text-primary-fg hover:underline shadow-xs transition cursor-pointer"
                       >
                         <FileText className="w-3.5 h-3.5" />
                         <span>{c.document_name}</span>
@@ -782,7 +822,7 @@ function QuizContent() {
 
                 <button
                   onClick={handleNextQuestion}
-                  className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-white dark:hover:bg-slate-100 text-white dark:text-slate-900 font-semibold text-xs shadow-md transition flex items-center justify-center gap-2 cursor-pointer mt-3"
+                  className="w-full py-3 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold text-xs shadow-xs transition flex items-center justify-center gap-2 cursor-pointer mt-3"
                 >
                   <span>
                     {currentIdx + 1 < session.total_questions ? 'Next Question' : 'Complete Drill & View Summary'}
@@ -798,27 +838,27 @@ function QuizContent() {
       {/* 3. Quiz Completion Summary & Remediation Recommendations */}
       {quizFinished && (
         <div className="space-y-6">
-          <div className="p-8 rounded-3xl bg-gradient-to-tr from-slate-900 via-indigo-950 to-slate-900 text-white border border-slate-800 shadow-2xl space-y-6">
+          <div className="p-8 rounded-3xl bg-gradient-to-r from-[var(--hero-from)] to-[var(--hero-to)] text-white shadow-card space-y-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
               <div className="space-y-2 text-center sm:text-left">
-                <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-400/30">
+                <span className="text-xs font-bold uppercase tracking-wider px-3 py-1 rounded-full bg-white/15 text-white border border-white/20">
                   Assessment Complete
                 </span>
                 <h1 className="text-3xl font-extrabold tracking-tight">
                   Performance & Concept Summary
                 </h1>
-                <p className="text-xs text-indigo-200">
+                <p className="text-xs text-white/85">
                   {answersHistory.length} questions completed • Immediate BKT update applied
                 </p>
               </div>
 
-              <div className="text-center p-5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/10 shrink-0">
+              <div className="text-center p-5 rounded-2xl bg-white/10 border border-white/20 shrink-0">
                 <span className="text-4xl sm:text-5xl font-black block tracking-tight">
                   {answersHistory.length > 0 
                     ? Math.round((answersHistory.reduce((acc, h) => acc + h.score_awarded, 0) / answersHistory.length) * 100)
                     : 0}%
                 </span>
-                <span className="text-xs text-indigo-200 mt-1 block">
+                <span className="text-xs text-white/85 mt-1 block">
                   Overall Accuracy Score
                 </span>
               </div>
@@ -826,24 +866,24 @@ function QuizContent() {
 
             {/* Separate Section Scores */}
             {assessmentReport?.section_scores && assessmentReport.section_scores.length > 0 && (
-              <div className="pt-4 border-t border-indigo-800/60">
-                <p className="text-xs font-bold uppercase tracking-wider text-indigo-300 mb-3">
+              <div className="pt-4 border-t border-white/20">
+                <p className="text-xs font-bold uppercase tracking-wider mb-3">
                   Scores by Section
                 </p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {assessmentReport.section_scores.map((sec) => (
-                    <div key={sec.section_code} className="p-4 rounded-2xl bg-white/10 border border-white/10 space-y-2">
+                    <div key={sec.section_code} className="p-4 rounded-2xl bg-white/10 border border-white/15 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-white">{sec.section_name}</span>
-                        <span className="text-xs font-black text-indigo-200">{sec.accuracy_percentage}%</span>
+                        <span className="text-xs font-bold">{sec.section_name}</span>
+                        <span className="text-xs font-black">{sec.accuracy_percentage}%</span>
                       </div>
-                      <div className="w-full bg-white/15 h-2 rounded-full overflow-hidden">
+                      <div className="w-full bg-white/20 h-2 rounded-full overflow-hidden">
                         <div
-                          className="bg-indigo-400 h-full rounded-full"
+                          className="bg-white h-full rounded-full"
                           style={{ width: `${Math.min(100, sec.accuracy_percentage)}%` }}
                         />
                       </div>
-                      <p className="text-[11px] text-indigo-200">
+                      <p className="text-[11px] text-white/85">
                         {sec.total_score} of {sec.max_score} pts ({sec.questions_answered} questions)
                       </p>
                     </div>
@@ -853,13 +893,13 @@ function QuizContent() {
             )}
 
             {/* Quick Actions */}
-            <div className="pt-4 border-t border-indigo-800/60 flex flex-wrap items-center gap-3">
+            <div className="pt-4 border-t border-white/20 flex flex-wrap items-center gap-3">
               <Link
                 href="/understanding"
-                className="px-5 py-3 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold text-xs shadow-lg shadow-indigo-500/30 transition flex items-center gap-2"
+                className="px-5 py-3 rounded-xl bg-white text-primary-fg hover:bg-white/90 font-bold text-xs shadow-sm transition flex items-center gap-2"
               >
-                <Sparkles className="w-4 h-4" />
-                <span>Open "My Understanding" Dashboard</span>
+                <Sparkles className="w-4 h-4 text-primary" />
+                <span>Open &quot;My Understanding&quot; Dashboard</span>
               </Link>
               <button
                 onClick={() => {
@@ -867,7 +907,7 @@ function QuizContent() {
                   setQuizFinished(false);
                   setAssessmentReport(null);
                 }}
-                className="px-5 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-white font-semibold text-xs border border-white/15 transition flex items-center gap-2 cursor-pointer"
+                className="px-5 py-3 rounded-xl bg-transparent hover:bg-white/10 text-white font-semibold text-xs border border-white transition flex items-center gap-2 cursor-pointer"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>Configure Another Drill</span>
@@ -877,29 +917,29 @@ function QuizContent() {
 
           {/* Diagnostic Performance Comparison & Actionable Suggestions */}
           {assessmentReport?.performance_comparison && assessmentReport.performance_comparison.has_comparison && (
-            <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-5">
+            <div className="p-6 rounded-3xl bg-surface border border-line shadow-card space-y-5">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-xl bg-primary-soft text-primary-fg flex items-center justify-center shrink-0">
                     <Sparkles className="w-5 h-5" />
                   </div>
                   <div>
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-primary-fg">
                       Cross-Section Diagnostic Insight
                     </span>
-                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                    <h3 className="text-lg font-bold text-fg">
                       {assessmentReport.performance_comparison.title}
                     </h3>
                   </div>
                 </div>
 
                 {assessmentReport.performance_comparison.mcq_score !== undefined && assessmentReport.performance_comparison.short_answer_score !== undefined && (
-                  <div className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 shrink-0">
+                  <div className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-full bg-surface-2 text-fg border border-line shrink-0">
                     <span>MCQ: {Math.round(assessmentReport.performance_comparison.mcq_score * 100)}%</span>
                     <span>•</span>
                     <span>Written: {Math.round(assessmentReport.performance_comparison.short_answer_score * 100)}%</span>
                     {assessmentReport.performance_comparison.gap !== undefined && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-primary-soft text-primary-fg font-bold">
                         Gap {Math.round(assessmentReport.performance_comparison.gap * 100)} pts
                       </span>
                     )}
@@ -907,19 +947,19 @@ function QuizContent() {
                 )}
               </div>
 
-              <div className="p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/50 text-xs text-indigo-950 dark:text-indigo-200 leading-relaxed font-medium">
+              <div className="p-4 rounded-2xl bg-primary-soft border border-primary/30 text-xs text-fg leading-relaxed font-medium">
                 {assessmentReport.performance_comparison.diagnosis}
               </div>
 
               {/* Suggestions */}
               <div className="space-y-2">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-fg">
                   Targeted Suggestions for Improvement:
                 </h4>
-                <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                <ul className="space-y-2 text-xs text-fg-2">
                   {assessmentReport.performance_comparison.suggestions.map((s, idx) => (
                     <li key={idx} className="flex items-start gap-2">
-                      <span className="w-5 h-5 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="w-5 h-5 rounded-full bg-primary-soft text-primary-fg text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5">
                         {idx + 1}
                       </span>
                       <span>{s}</span>
@@ -930,29 +970,29 @@ function QuizContent() {
 
               {/* Case 1: Missing keywords and side-by-side answers */}
               {assessmentReport.performance_comparison.side_by_side_answers && assessmentReport.performance_comparison.side_by_side_answers.length > 0 && (
-                <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <div className="space-y-3 pt-3 border-t border-line">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-fg">
                     Side-by-Side Model Comparison (Missing Key Concepts Highlighted):
                   </h4>
                   <div className="space-y-3">
                     {assessmentReport.performance_comparison.side_by_side_answers.map((item, idx) => (
-                      <div key={idx} className="p-4 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-850 space-y-2">
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{item.question}</p>
+                      <div key={idx} className="p-4 rounded-2xl border border-line bg-surface-2 space-y-2">
+                        <p className="text-xs font-bold text-fg">{item.question}</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                          <div className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 space-y-1">
-                            <span className="text-[10px] font-bold text-slate-400 uppercase block">Your Answer:</span>
-                            <p className="text-slate-700 dark:text-slate-300">{item.user_answer}</p>
+                          <div className="p-3 rounded-xl bg-surface border border-line space-y-1">
+                            <span className="text-[10px] font-bold text-fg-3 uppercase block">Your Answer:</span>
+                            <p className="text-fg">{item.user_answer}</p>
                           </div>
-                          <div className="p-3 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 space-y-1">
-                            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase block">Model Answer:</span>
-                            <p className="text-emerald-900 dark:text-emerald-200">{item.model_answer}</p>
+                          <div className="p-3 rounded-xl bg-success-soft border border-success/30 space-y-1">
+                            <span className="text-[10px] font-bold text-success uppercase block">Model Answer:</span>
+                            <p className="text-fg">{item.model_answer}</p>
                           </div>
                         </div>
                         {item.missing_keywords && item.missing_keywords.length > 0 && (
                           <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                            <span className="text-[11px] font-medium text-slate-500">Missing concepts:</span>
+                            <span className="text-[11px] font-medium text-fg-3">Missing concepts:</span>
                             {item.missing_keywords.map((kw, i) => (
-                              <span key={i} className="px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300 text-xs font-semibold">
+                              <span key={i} className="px-2 py-0.5 rounded-md bg-danger-soft text-danger border border-danger/30 text-xs font-semibold">
                                 ✗ {kw}
                               </span>
                             ))}
@@ -966,24 +1006,24 @@ function QuizContent() {
 
               {/* Case 2: Partial Option Choices Analysis */}
               {assessmentReport.performance_comparison.partial_picks_comparison && assessmentReport.performance_comparison.partial_picks_comparison.length > 0 && (
-                <div className="space-y-3 pt-3 border-t border-slate-100 dark:border-slate-800">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                <div className="space-y-3 pt-3 border-t border-line">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-fg">
                     Partial Distractor Analysis (Close Traps):
                   </h4>
                   <div className="space-y-3">
                     {assessmentReport.performance_comparison.partial_picks_comparison.map((item, idx) => (
-                      <div key={idx} className="p-4 rounded-2xl border border-amber-200 dark:border-amber-900/60 bg-amber-50/30 dark:bg-amber-950/20 space-y-2">
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{item.question}</p>
+                      <div key={idx} className="p-4 rounded-2xl border border-warning/30 bg-warning-soft/40 space-y-2">
+                        <p className="text-xs font-bold text-fg">{item.question}</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-                          <div className="p-3 rounded-xl bg-amber-100/60 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 space-y-1">
-                            <span className="text-[10px] font-bold uppercase block">Your Choice (Partial):</span>
+                          <div className="p-3 rounded-xl bg-warning-soft border border-warning/40 text-fg space-y-1">
+                            <span className="text-[10px] font-bold text-warning uppercase block">Your Choice (Partial):</span>
                             <p>{item.chosen_partial_option}</p>
-                            <p className="text-[11px] font-medium text-amber-700 dark:text-amber-400 mt-1">
+                            <p className="text-[11px] font-medium text-warning mt-1">
                               <em>Missing nuance:</em> {item.missing_detail}
                             </p>
                           </div>
-                          <div className="p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200 space-y-1">
-                            <span className="text-[10px] font-bold uppercase block">Fully Correct Option:</span>
+                          <div className="p-3 rounded-xl bg-success-soft border border-success/30 text-fg space-y-1">
+                            <span className="text-[10px] font-bold text-success uppercase block">Fully Correct Option:</span>
                             <p>{item.correct_option}</p>
                           </div>
                         </div>
@@ -995,12 +1035,12 @@ function QuizContent() {
 
               {/* Practice Set Offer */}
               {assessmentReport.performance_comparison.practice_questions && assessmentReport.performance_comparison.practice_questions.length > 0 && (
-                <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="pt-3 border-t border-line flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
-                    <h4 className="text-xs font-bold text-slate-900 dark:text-slate-100">
+                    <h4 className="text-xs font-bold text-fg">
                       Recommended Targeted Practice Set (3 Questions)
                     </h4>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-[11px] text-fg-3">
                       Targeted {assessmentReport.performance_comparison.practice_set_type === 'short_answer' ? 'written explanation' : 'multiple choice'} drill to close this diagnostic gap.
                     </p>
                   </div>
@@ -1026,7 +1066,7 @@ function QuizContent() {
                       setQuizFinished(false);
                       setAssessmentReport(null);
                     }}
-                    className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                    className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-semibold shadow-xs transition flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                   >
                     <PlayCircle className="w-4 h-4" />
                     <span>Start 3-Question Practice Drill</span>
@@ -1037,31 +1077,31 @@ function QuizContent() {
           )}
 
           {/* Drill Breakdown & Remediation Links */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-            <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-indigo-600" />
+          <div className="p-6 rounded-3xl bg-surface border border-line shadow-card space-y-4">
+            <h3 className="text-base font-bold text-fg flex items-center gap-2">
+              <Layers className="w-4 h-4 text-primary-fg" />
               <span>Question-by-Question Diagnostics</span>
             </h3>
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="divide-y divide-line">
               {answersHistory.map((ans, idx) => (
                 <div key={idx} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-slate-400">#{idx + 1}</span>
-                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600">
+                      <span className="text-xs font-bold text-fg-3">#{idx + 1}</span>
+                      <span className="text-xs font-semibold px-2 py-0.5 rounded bg-surface-2 text-fg border border-line">
                         {ans.topic_name}
                       </span>
-                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
                         ans.score_awarded >= 0.8
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                          ? 'bg-success-soft text-success border-success/30'
                           : ans.score_awarded >= 0.5
-                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
-                          : 'bg-rose-100 text-rose-800 dark:bg-rose-950 dark:text-rose-300'
+                          ? 'bg-warning-soft text-warning border-warning/30'
+                          : 'bg-danger-soft text-danger border-danger/30'
                       }`}>
                         Score: {ans.score_awarded}
                       </span>
                     </div>
-                    <p className="text-xs text-slate-800 dark:text-slate-200 font-medium">
+                    <p className="text-xs text-fg font-medium">
                       {ans.question_text}
                     </p>
                   </div>
@@ -1070,7 +1110,7 @@ function QuizContent() {
                   {ans.score_awarded < 0.8 && ans.topic_id && (
                     <Link
                       href={`/understanding?topic_id=${ans.topic_id}&action=remediate`}
-                      className="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 dark:bg-indigo-950/60 dark:hover:bg-indigo-900 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-xs font-semibold flex items-center gap-1.5 shrink-0 transition"
+                      className="px-3.5 py-2 rounded-xl bg-primary-soft hover:opacity-90 border border-primary/30 text-primary-fg text-xs font-semibold flex items-center gap-1.5 shrink-0 transition"
                     >
                       <RotateCcw className="w-3.5 h-3.5" />
                       <span>Learn this again</span>
@@ -1094,8 +1134,8 @@ function QuizContent() {
 
 export default function QuizPage() {
   return (
-    <React.Suspense fallback={<div className="flex-1 flex items-center justify-center p-12 text-slate-400">Loading adaptive assessment workspace...</div>}>
+    <Suspense fallback={<div className="flex-1 flex items-center justify-center p-12 text-fg-3">Loading adaptive assessment workspace...</div>}>
       <QuizContent />
-    </React.Suspense>
+    </Suspense>
   );
 }

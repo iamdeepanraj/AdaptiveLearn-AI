@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import {
   BrainCircuit,
@@ -15,18 +15,17 @@ import {
   ArrowRight,
   RotateCcw,
   X,
-  ExternalLink,
   ChevronDown,
   ChevronUp,
   Send,
   Loader2
 } from 'lucide-react';
 import { useSearchParams } from 'next/navigation';
-import { api, UnderstandingOverview, RemediationStartData, QuestionStudentView } from '@/lib/api';
+import { api, UnderstandingOverview, RemediationStartData } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
 
 function UnderstandingContent() {
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const searchParams = useSearchParams();
   const queryTopicId = searchParams.get('topic_id');
   const queryAction = searchParams.get('action');
@@ -111,41 +110,41 @@ function UnderstandingContent() {
   const getLevelBadgeClass = (level: string) => {
     switch (level) {
       case 'Strong':
-        return 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800';
+        return 'bg-success-soft text-success border-success/30';
       case 'Developing':
-        return 'bg-amber-100 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300 border-amber-300 dark:border-amber-800';
+        return 'bg-warning-soft text-warning border-warning/30';
       case 'Weak':
-        return 'bg-rose-100 text-rose-800 dark:bg-rose-950/60 dark:text-rose-300 border-rose-300 dark:border-rose-800';
+        return 'bg-danger-soft text-danger border-danger/30';
       default:
-        return 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-300 dark:border-slate-700';
+        return 'bg-surface-2 text-fg-2 border-line';
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header & Overall Summary */}
-      <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-blue-900 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-[var(--hero-from)] to-[var(--hero-to)] rounded-3xl p-8 text-white shadow-card relative overflow-hidden">
         <div className="relative z-10 space-y-4 max-w-3xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-semibold uppercase tracking-wider text-indigo-200 border border-white/10">
-            <BrainCircuit className="w-4 h-4 text-indigo-300" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-xs font-semibold uppercase tracking-wider text-white border border-white/20">
+            <BrainCircuit className="w-4 h-4" />
             Learning Science & Mastery Engine
           </div>
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight">
             My Understanding
           </h1>
-          <p className="text-indigo-200 text-sm sm:text-base leading-relaxed">
+          <p className="text-white/85 text-sm sm:text-base leading-relaxed">
             Continuous Bayesian knowledge tracing and recency-weighted understanding metrics derived strictly from your practice answers.
           </p>
 
           {data && (
             <div className="pt-2">
-              <div className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/15 flex items-start gap-3">
-                <Sparkles className="w-5 h-5 text-amber-300 shrink-0 mt-0.5" />
+              <div className="bg-white/10 rounded-2xl p-4 border border-white/20 flex items-start gap-3">
+                <Sparkles className="w-5 h-5 text-warning shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-xs font-semibold text-amber-200 uppercase tracking-wider">
+                  <p className="text-xs font-semibold text-white/90 uppercase tracking-wider">
                     Honest Synthesis (Stored Results Only)
                   </p>
-                  <p className="text-sm text-white font-medium mt-1 leading-relaxed">
+                  <p className="text-sm font-medium mt-1 leading-relaxed">
                     {data.plain_summary}
                   </p>
                 </div>
@@ -156,19 +155,19 @@ function UnderstandingContent() {
 
         {/* Overall Score Badge */}
         {data && (
-          <div className="mt-6 sm:mt-0 sm:absolute sm:top-8 sm:right-8 bg-white/10 backdrop-blur-md rounded-2xl p-5 border border-white/20 text-center min-w-[180px]">
-            <p className="text-xs font-semibold text-indigo-200 uppercase tracking-wider">Overall Level</p>
-            <div className="text-2xl font-black text-white mt-1">
+          <div className="mt-6 sm:mt-0 sm:absolute sm:top-8 sm:right-8 bg-white/10 rounded-2xl p-5 border border-white/20 text-center min-w-[180px]">
+            <p className="text-xs font-semibold text-white/80 uppercase tracking-wider">Overall Level</p>
+            <div className="text-2xl font-black mt-1">
               {data.overall_level}
             </div>
             <div className="mt-2 flex items-center justify-center gap-2">
               <div className="w-24 bg-white/20 h-2 rounded-full overflow-hidden">
                 <div
-                  className="bg-emerald-400 h-full rounded-full transition-all duration-500"
+                  className="bg-white h-full rounded-full transition-all duration-500"
                   style={{ width: `${Math.min(100, Math.round(data.overall_score * 100))}%` }}
                 />
               </div>
-              <span className="text-xs font-bold text-white">
+              <span className="text-xs font-bold">
                 {Math.round(data.overall_score * 100)}%
               </span>
             </div>
@@ -177,14 +176,14 @@ function UnderstandingContent() {
       </div>
 
       {loading && (
-        <div className="py-16 text-center text-slate-500 flex flex-col items-center justify-center gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-indigo-600" />
+        <div className="py-16 text-center text-fg-3 flex flex-col items-center justify-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
           <p className="text-sm">Calculating understanding scores from stored attempts...</p>
         </div>
       )}
 
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-sm">
+        <div className="p-4 bg-danger-soft border border-danger/30 text-danger rounded-xl text-sm">
           {error}
         </div>
       )}
@@ -193,30 +192,30 @@ function UnderstandingContent() {
         <div className="space-y-10">
           {/* Latest Quiz Diagnostic Suggestions */}
           {data.latest_quiz_suggestion && (
-            <div className="p-6 rounded-3xl border shadow-md bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 space-y-4">
+            <div className="p-6 rounded-3xl border shadow-card bg-surface border-line space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
-                  <h3 className="text-base font-bold text-slate-900 dark:text-slate-100">
+                  <Sparkles className="w-5 h-5 text-primary-fg shrink-0" />
+                  <h3 className="text-base font-bold text-fg">
                     Latest Quiz Diagnostic: {data.latest_quiz_suggestion.title}
                   </h3>
                 </div>
                 {data.latest_quiz_suggestion.mcq_score !== undefined && data.latest_quiz_suggestion.short_answer_score !== undefined && (
-                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800 shrink-0 self-start sm:self-auto">
+                  <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-primary-soft text-primary-fg border border-primary/30 shrink-0 self-start sm:self-auto">
                     MCQ {Math.round(data.latest_quiz_suggestion.mcq_score * 100)}% · Written {Math.round(data.latest_quiz_suggestion.short_answer_score * 100)}%
                   </span>
                 )}
               </div>
 
-              <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
+              <p className="text-xs text-fg-2 leading-relaxed font-medium">
                 {data.latest_quiz_suggestion.diagnosis}
               </p>
 
               {data.latest_quiz_suggestion.suggestions?.length > 0 && (
-                <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+                <ul className="space-y-1.5 text-xs text-fg-2">
                   {data.latest_quiz_suggestion.suggestions.map((s, idx) => (
                     <li key={idx} className="flex items-start gap-2">
-                      <span className="text-indigo-600 font-bold shrink-0">•</span>
+                      <span className="text-primary-fg font-bold shrink-0">•</span>
                       <span>{s}</span>
                     </li>
                   ))}
@@ -224,10 +223,10 @@ function UnderstandingContent() {
               )}
 
               {data.latest_quiz_suggestion.missing_key_terms?.length > 0 && (
-                <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-                  <span className="text-[11px] font-semibold text-slate-500">Key terms to review:</span>
+                <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-line">
+                  <span className="text-[11px] font-semibold text-fg-3">Key terms to review:</span>
                   {data.latest_quiz_suggestion.missing_key_terms.map((term, i) => (
-                    <span key={i} className="px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 text-xs font-semibold border border-rose-200 dark:border-rose-900">
+                    <span key={i} className="px-2 py-0.5 rounded-md bg-danger-soft text-danger text-xs font-semibold border border-danger/30">
                       {term}
                     </span>
                   ))}
@@ -237,7 +236,7 @@ function UnderstandingContent() {
               <div className="pt-2 flex items-center gap-3">
                 <Link
                   href="/quiz"
-                  className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs shadow-sm transition flex items-center gap-1.5"
+                  className="px-4 py-2 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold text-xs shadow-xs transition flex items-center gap-1.5"
                 >
                   <span>Launch Practice Drill</span>
                   <ArrowRight className="w-3.5 h-3.5" />
@@ -250,26 +249,26 @@ function UnderstandingContent() {
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                  <AlertTriangle className="w-5 h-5 text-amber-500" />
+                <h2 className="text-xl font-bold text-fg flex items-center gap-2">
+                  <AlertTriangle className="w-5 h-5 text-warning" />
                   Concepts Requiring Attention (Top Weak Concepts)
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-fg-3 mt-0.5">
                   Targeted misconceptions detected from quiz choices and keyword gaps. Click <strong>Learn this again</strong> to start a targeted remediation session.
                 </p>
               </div>
             </div>
 
             {data.weak_concepts.length === 0 ? (
-              <div className="p-8 border border-dashed border-emerald-300 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-2xl text-center">
-                <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto mb-2" />
-                <h3 className="font-bold text-slate-900 dark:text-slate-100">No Weak Concepts Detected!</h3>
-                <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+              <div className="p-8 border border-dashed border-success/40 bg-success-soft rounded-2xl text-center">
+                <CheckCircle2 className="w-10 h-10 text-success mx-auto mb-2" />
+                <h3 className="font-bold text-fg">No Weak Concepts Detected!</h3>
+                <p className="text-xs text-fg-3 mt-1 max-w-md mx-auto">
                   You are performing consistently well across all assessed modules. Take an adaptive quiz to challenge yourself further.
                 </p>
                 <Link
                   href="/quiz"
-                  className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition"
+                  className="inline-flex items-center gap-2 mt-4 px-4 py-2 bg-primary text-white rounded-xl text-xs font-semibold hover:bg-primary-hover transition"
                 >
                   Take Practice Quiz <ArrowRight className="w-4 h-4" />
                 </Link>
@@ -279,7 +278,7 @@ function UnderstandingContent() {
                 {data.weak_concepts.map((concept) => (
                   <div
                     key={concept.topic_id}
-                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-md transition flex flex-col justify-between"
+                    className="bg-surface border border-line rounded-2xl p-6 shadow-card hover:shadow-md transition flex flex-col justify-between"
                   >
                     <div className="space-y-3">
                       <div className="flex items-center justify-between">
@@ -287,13 +286,13 @@ function UnderstandingContent() {
                           {concept.level} ({Math.round(concept.score * 100)}%)
                         </span>
                       </div>
-                      <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">
+                      <h3 className="font-bold text-base text-fg">
                         {concept.concept_name}
                       </h3>
 
                       {/* Misconception Box */}
-                      <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-3 text-xs text-amber-900 dark:text-amber-200">
-                        <span className="font-semibold block mb-0.5">Misconception Detected:</span>
+                      <div className="bg-warning-soft border border-warning/30 rounded-xl p-3 text-xs text-fg">
+                        <span className="font-semibold block mb-0.5 text-warning">Misconception Detected:</span>
                         {concept.misconception}
                       </div>
 
@@ -302,7 +301,7 @@ function UnderstandingContent() {
                         <div className="pt-1">
                           <button
                             onClick={() => toggleEvidence(concept.topic_id)}
-                            className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 flex items-center gap-1 hover:underline"
+                            className="text-[11px] font-semibold text-primary-fg flex items-center gap-1 hover:underline cursor-pointer"
                           >
                             {expandedEvidence[concept.topic_id] ? (
                               <>Hide Evidence ({concept.evidence.length}) <ChevronUp className="w-3.5 h-3.5" /></>
@@ -312,12 +311,12 @@ function UnderstandingContent() {
                           </button>
 
                           {expandedEvidence[concept.topic_id] && (
-                            <div className="mt-2 space-y-2 bg-slate-50 dark:bg-slate-800/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">
+                            <div className="mt-2 space-y-2 bg-surface-2 p-3 rounded-xl border border-line text-xs">
                               {concept.evidence.map((ev, idx) => (
-                                <div key={idx} className="border-b border-slate-200 dark:border-slate-700/60 pb-2 last:border-b-0 last:pb-0">
-                                  <p className="font-medium text-slate-800 dark:text-slate-200">{ev.question_text}</p>
-                                  <p className="text-[11px] text-slate-500 mt-0.5">
-                                    Your Answer: <span className="font-mono text-rose-600 dark:text-rose-400">{ev.student_answer}</span>
+                                <div key={idx} className="border-b border-line pb-2 last:border-b-0 last:pb-0">
+                                  <p className="font-medium text-fg">{ev.question_text}</p>
+                                  <p className="text-[11px] text-fg-3 mt-0.5">
+                                    Your Answer: <span className="font-mono text-danger">{ev.student_answer}</span>
                                     {ev.score_awarded !== undefined && ` (Credit: ${ev.score_awarded})`}
                                   </p>
                                 </div>
@@ -329,8 +328,8 @@ function UnderstandingContent() {
 
                       {/* Grounded Citation Excerpt */}
                       {concept.citations && concept.citations.length > 0 && (
-                        <div className="text-[11px] text-slate-500 pt-1 flex items-center gap-1.5">
-                          <BookOpen className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                        <div className="text-[11px] text-fg-3 pt-1 flex items-center gap-1.5">
+                          <BookOpen className="w-3.5 h-3.5 text-primary-fg shrink-0" />
                           <span className="truncate">
                             Source: {concept.citations[0].document_name} (Page {concept.citations[0].page || concept.citations[0].slide || 1})
                           </span>
@@ -339,10 +338,10 @@ function UnderstandingContent() {
                     </div>
 
                     {/* CTA: Learn This Again */}
-                    <div className="pt-5 mt-4 border-t border-slate-100 dark:border-slate-800">
+                    <div className="pt-5 mt-4 border-t border-line">
                       <button
                         onClick={() => handleStartRemediation(concept.topic_id, 1)}
-                        className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-xs font-bold shadow-xs hover:shadow-md transition active:scale-98"
+                        className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold shadow-xs transition cursor-pointer"
                       >
                         <RotateCcw className="w-4 h-4" />
                         Learn this again
@@ -355,13 +354,13 @@ function UnderstandingContent() {
           </div>
 
           {/* All Topics Breakdown Table */}
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden">
-            <div className="p-6 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div className="bg-surface border border-line rounded-2xl shadow-card overflow-hidden">
+            <div className="p-6 border-b border-line flex items-center justify-between">
               <div>
-                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">
+                <h2 className="text-lg font-bold text-fg">
                   Concept Mastery & Trend Tracker
                 </h2>
-                <p className="text-xs text-slate-500 mt-0.5">
+                <p className="text-xs text-fg-3 mt-0.5">
                   Detailed breakdown by course topic. Recency-weighted understanding score with historical trajectories.
                 </p>
               </div>
@@ -369,7 +368,7 @@ function UnderstandingContent() {
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
-                <thead className="bg-slate-50 dark:bg-slate-800/50 text-slate-500 uppercase tracking-wider font-semibold border-b border-slate-200 dark:border-slate-800">
+                <thead className="bg-surface-2 text-fg-3 uppercase tracking-wider font-semibold border-b border-line">
                   <tr>
                     <th className="py-3.5 px-6">Topic / Concept</th>
                     <th className="py-3.5 px-4">Level</th>
@@ -379,12 +378,12 @@ function UnderstandingContent() {
                     <th className="py-3.5 px-6 text-right">Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                <tbody className="divide-y divide-line">
                   {data.topics.map((t) => (
-                    <tr key={t.topic_id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/30 transition">
-                      <td className="py-4 px-6 font-semibold text-slate-900 dark:text-slate-100">
+                    <tr key={t.topic_id} className="hover:bg-surface-2 transition">
+                      <td className="py-4 px-6 font-semibold text-fg">
                         {t.topic_name}
-                        {t.topic_code && <span className="text-[10px] text-slate-400 font-mono ml-2">[{t.topic_code}]</span>}
+                        {t.topic_code && <span className="text-[10px] text-fg-3 font-mono ml-2">[{t.topic_code}]</span>}
                       </td>
                       <td className="py-4 px-4">
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${getLevelBadgeClass(t.understanding_level)}`}>
@@ -393,39 +392,39 @@ function UnderstandingContent() {
                       </td>
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-2">
-                          <div className="w-16 bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                          <div className="w-16 bg-surface-2 h-1.5 rounded-full overflow-hidden border border-line">
                             <div
                               className={`h-full rounded-full ${
                                 t.understanding_score >= 0.8
-                                  ? 'bg-emerald-500'
+                                  ? 'bg-success'
                                   : t.understanding_score >= 0.5
-                                  ? 'bg-amber-500'
-                                  : 'bg-rose-500'
+                                  ? 'bg-warning'
+                                  : 'bg-danger'
                               }`}
                               style={{ width: `${Math.round(t.understanding_score * 100)}%` }}
                             />
                           </div>
-                          <span className="font-bold text-slate-700 dark:text-slate-300">
+                          <span className="font-bold text-fg">
                             {Math.round(t.understanding_score * 100)}%
                           </span>
                         </div>
                       </td>
-                      <td className="py-4 px-4 text-slate-600 dark:text-slate-400 font-medium">
+                      <td className="py-4 px-4 text-fg-2 font-medium">
                         {t.total_attempts} attempts ({t.correct_attempts} correct)
                       </td>
                       <td className="py-4 px-4">
                         {t.trend === 'improving' && (
-                          <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold text-[11px]">
+                          <span className="inline-flex items-center gap-1 text-success font-semibold text-[11px]">
                             <TrendingUp className="w-4 h-4" /> Improving
                           </span>
                         )}
                         {t.trend === 'declining' && (
-                          <span className="inline-flex items-center gap-1 text-rose-600 font-semibold text-[11px]">
+                          <span className="inline-flex items-center gap-1 text-danger font-semibold text-[11px]">
                             <TrendingDown className="w-4 h-4" /> Declining
                           </span>
                         )}
                         {t.trend === 'steady' && (
-                          <span className="inline-flex items-center gap-1 text-slate-500 text-[11px]">
+                          <span className="inline-flex items-center gap-1 text-fg-3 text-[11px]">
                             <Minus className="w-4 h-4" /> Steady
                           </span>
                         )}
@@ -434,13 +433,13 @@ function UnderstandingContent() {
                         {t.understanding_level !== 'Strong' ? (
                           <button
                             onClick={() => handleStartRemediation(t.topic_id, 1)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 font-bold rounded-lg hover:bg-indigo-100 dark:hover:bg-indigo-900 transition text-[11px]"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 bg-primary-soft text-primary-fg font-bold rounded-lg hover:opacity-90 transition text-[11px] cursor-pointer border border-primary/30"
                           >
                             <RotateCcw className="w-3.5 h-3.5" />
                             Learn this again
                           </button>
                         ) : (
-                          <span className="text-emerald-600 font-medium text-[11px] flex items-center justify-end gap-1">
+                          <span className="text-success font-medium text-[11px] flex items-center justify-end gap-1">
                             <CheckCircle2 className="w-3.5 h-3.5" /> Mastered
                           </span>
                         )}
@@ -455,24 +454,24 @@ function UnderstandingContent() {
           {/* Strengths and Past Remediation Progress */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Strengths */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs">
-              <h3 className="font-bold text-base text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+            <div className="bg-surface border border-line rounded-2xl p-6 shadow-card">
+              <h3 className="font-bold text-base text-fg mb-2 flex items-center gap-2">
+                <CheckCircle2 className="w-5 h-5 text-success" />
                 Demonstrated Strengths
               </h3>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-fg-3 mb-4">
                 Concepts where you have consistently scored ≥ 80% on practice and diagnostic assessments.
               </p>
               {data.strengths.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">No strong concepts established yet. Keep answering practice questions!</p>
+                <p className="text-xs text-fg-3 italic">No strong concepts established yet. Keep answering practice questions!</p>
               ) : (
                 <div className="flex flex-wrap gap-2">
                   {data.strengths.map((s, idx) => (
                     <span
                       key={idx}
-                      className="px-3 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 rounded-xl text-xs font-semibold flex items-center gap-1.5"
+                      className="px-3 py-1.5 bg-success-soft text-success border border-success/30 rounded-xl text-xs font-semibold flex items-center gap-1.5"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                      <Sparkles className="w-3.5 h-3.5 text-success" />
                       {s}
                     </span>
                   ))}
@@ -481,31 +480,31 @@ function UnderstandingContent() {
             </div>
 
             {/* Remediation Sessions History */}
-            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xs">
-              <h3 className="font-bold text-base text-slate-900 dark:text-slate-100 mb-2 flex items-center gap-2">
-                <RotateCcw className="w-5 h-5 text-indigo-600" />
+            <div className="bg-surface border border-line rounded-2xl p-6 shadow-card">
+              <h3 className="font-bold text-base text-fg mb-2 flex items-center gap-2">
+                <RotateCcw className="w-5 h-5 text-primary-fg" />
                 Remediation Loop Progress
               </h3>
-              <p className="text-xs text-slate-500 mb-4">
+              <p className="text-xs text-fg-3 mb-4">
                 Recent targeted re-teaching loops and their verification outcomes.
               </p>
               {data.remediation_sessions.length === 0 ? (
-                <p className="text-xs text-slate-400 italic">No remediation sessions completed yet.</p>
+                <p className="text-xs text-fg-3 italic">No remediation sessions completed yet.</p>
               ) : (
                 <div className="space-y-2.5">
                   {data.remediation_sessions.map((s) => (
                     <div
                       key={s.id}
-                      className="p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl flex items-center justify-between text-xs"
+                      className="p-3 bg-surface-2 border border-line rounded-xl flex items-center justify-between text-xs"
                     >
                       <div>
-                        <span className="font-semibold text-slate-800 dark:text-slate-200">{s.concept_name}</span>
-                        <p className="text-[10px] text-slate-400">Round {s.round_number} • Score: {Math.round(s.score * 100)}%</p>
+                        <span className="font-semibold text-fg">{s.concept_name}</span>
+                        <p className="text-[10px] text-fg-3">Round {s.round_number} • Score: {Math.round(s.score * 100)}%</p>
                       </div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                         s.is_improving
-                          ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200'
-                          : 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+                          ? 'bg-success-soft text-success border-success/30'
+                          : 'bg-warning-soft text-warning border-warning/30'
                       }`}>
                         {s.is_improving ? 'Improving' : s.status}
                       </span>
@@ -521,28 +520,28 @@ function UnderstandingContent() {
       {/* REMEDIATION MODAL / DRAWER */}
       {remediationOpen && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-3xl rounded-3xl shadow-2xl p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-surface border border-line w-full max-w-3xl rounded-3xl shadow-card p-6 sm:p-8 space-y-6 max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+            <div className="flex items-start justify-between border-b border-line pb-4">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-primary-fg">
                   Concept Remediation Loop • Round {remediationData?.round_number || 1} ({remediationData?.explanation_style?.replace('_', ' ') || 'simpler'})
                 </span>
-                <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 mt-1">
+                <h2 className="text-xl sm:text-2xl font-black text-fg mt-1">
                   Re-teaching: {remediationData?.concept_name}
                 </h2>
               </div>
               <button
                 onClick={() => setRemediationOpen(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                className="p-2 text-fg-3 hover:text-fg rounded-full hover:bg-surface-2 transition cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {remediationLoading && (
-              <div className="py-16 text-center text-slate-500 space-y-3">
-                <Loader2 className="w-8 h-8 animate-spin text-indigo-600 mx-auto" />
+              <div className="py-16 text-center text-fg-3 space-y-3">
+                <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto" />
                 <p className="text-sm font-medium">Generating patient re-explanation and checking prerequisites...</p>
               </div>
             )}
@@ -551,27 +550,27 @@ function UnderstandingContent() {
               <div className="space-y-6">
                 {/* Prerequisite Context */}
                 {remediationData.weak_prerequisite && (
-                  <div className="p-3 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/60 rounded-xl text-xs text-indigo-900 dark:text-indigo-200">
+                  <div className="p-3 bg-primary-soft border border-primary/30 rounded-xl text-xs text-fg">
                     <strong>Prerequisite Note:</strong> This concept relies on foundations from{' '}
-                    <span className="underline font-bold">{remediationData.weak_prerequisite}</span>. We will bridge those foundations first.
+                    <span className="underline font-bold text-primary-fg">{remediationData.weak_prerequisite}</span>. We will bridge those foundations first.
                   </div>
                 )}
 
                 {/* Misconception Targeted */}
-                <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="p-3 bg-warning-soft border border-warning/30 rounded-xl text-xs text-fg flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 text-warning shrink-0 mt-0.5" />
                   <div>
-                    <strong>Addressing Detected Misconception:</strong>
+                    <strong className="text-warning">Addressing Detected Misconception:</strong>
                     <p className="mt-0.5">{remediationData.misconception_addressed}</p>
                   </div>
                 </div>
 
                 {/* Explanation */}
                 <div className="space-y-2">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-fg-3">
                     Patient Step-by-Step Re-Explanation
                   </h4>
-                  <div className="p-4 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-200 dark:border-slate-700 text-sm leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-line font-serif">
+                  <div className="p-4 bg-surface-2 rounded-2xl border border-line text-sm leading-relaxed text-fg whitespace-pre-line">
                     {remediationData.explanation_text}
                   </div>
                 </div>
@@ -579,10 +578,10 @@ function UnderstandingContent() {
                 {/* Worked Example */}
                 {remediationData.worked_example && (
                   <div className="space-y-2">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-fg-3">
                       Targeted Worked Example
                     </h4>
-                    <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/30 rounded-2xl border border-indigo-200 dark:border-indigo-800/50 text-sm leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-line font-mono text-xs">
+                    <div className="p-4 bg-surface-2 rounded-2xl border border-line text-sm leading-relaxed text-fg whitespace-pre-line font-mono text-xs">
                       {remediationData.worked_example}
                     </div>
                   </div>
@@ -590,19 +589,19 @@ function UnderstandingContent() {
 
                 {/* Check Questions Section */}
                 {!remediationResult && (
-                  <div className="space-y-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                    <h3 className="font-bold text-base text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                      <HelpCircle className="w-4 h-4 text-indigo-600" />
+                  <div className="space-y-4 pt-4 border-t border-line">
+                    <h3 className="font-bold text-base text-fg flex items-center gap-2">
+                      <HelpCircle className="w-4 h-4 text-primary-fg" />
                       Check Your Understanding (2-3 Questions)
                     </h3>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-xs text-fg-3">
                       Answer these questions to confirm mastery. Score ≥ 80% to schedule spaced review and graduate this concept.
                     </p>
 
                     <div className="space-y-6">
                       {remediationData.check_questions.map((q, idx) => (
-                        <div key={q.id} className="p-4 bg-white dark:bg-slate-800/40 border border-slate-200 dark:border-slate-700 rounded-2xl space-y-3">
-                          <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                        <div key={q.id} className="p-4 bg-surface-2 border border-line rounded-2xl space-y-3">
+                          <p className="text-sm font-semibold text-fg">
                             {idx + 1}. {q.question_text}
                           </p>
 
@@ -614,8 +613,8 @@ function UnderstandingContent() {
                                   key={opt.key}
                                   className={`flex items-start gap-3 p-3 rounded-xl border text-xs cursor-pointer transition ${
                                     userAnswers[q.id] === opt.key
-                                      ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-950/60 font-semibold text-indigo-900 dark:text-indigo-200'
-                                      : 'border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800'
+                                      ? 'border-primary bg-primary-soft font-semibold text-primary-fg'
+                                      : 'border-line bg-surface hover:border-line-strong'
                                   }`}
                                 >
                                   <input
@@ -626,7 +625,7 @@ function UnderstandingContent() {
                                     onChange={(e) =>
                                       setUserAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
                                     }
-                                    className="mt-0.5 text-indigo-600 focus:ring-indigo-500"
+                                    className="mt-0.5 text-primary focus:ring-focus"
                                   />
                                   <span>
                                     <strong className="mr-1">{opt.key}:</strong> {opt.text}
@@ -643,7 +642,7 @@ function UnderstandingContent() {
                                 onChange={(e) =>
                                   setUserAnswers((prev) => ({ ...prev, [q.id]: e.target.value }))
                                 }
-                                className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-hidden focus:ring-2 focus:ring-indigo-500"
+                                className="w-full px-3 py-2 bg-surface border border-line-strong rounded-xl text-xs focus:outline-hidden focus:ring-2 focus:ring-focus text-fg placeholder:text-fg-3"
                               />
                             </div>
                           )}
@@ -658,7 +657,7 @@ function UnderstandingContent() {
                           submittingRemediation ||
                           Object.keys(userAnswers).length < remediationData.check_questions.length
                         }
-                        className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition shadow-xs"
+                        className="flex items-center gap-2 px-6 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-50 text-white rounded-xl text-xs font-bold transition shadow-xs cursor-pointer"
                       >
                         {submittingRemediation ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
@@ -673,33 +672,33 @@ function UnderstandingContent() {
 
                 {/* Remediation Results View */}
                 {remediationResult && (
-                  <div className="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-700">
+                  <div className="space-y-4 pt-4 border-t border-line">
                     <div className={`p-4 rounded-2xl border ${
                       remediationResult.is_improving
-                        ? 'bg-emerald-50 dark:bg-emerald-950/40 border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-200'
-                        : 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200'
+                        ? 'bg-success-soft border-success text-fg'
+                        : 'bg-warning-soft border-warning text-fg'
                     }`}>
-                      <h4 className="font-bold text-sm mb-1">
+                      <h4 className="font-bold text-sm mb-1 text-fg">
                         {remediationResult.is_improving ? 'Remediation Succeeded!' : 'Targeted Check Result'}
                       </h4>
-                      <p className="text-xs leading-relaxed">{remediationResult.message}</p>
+                      <p className="text-xs leading-relaxed text-fg-2">{remediationResult.message}</p>
                     </div>
 
                     {/* Graded Details breakdown */}
                     {remediationResult.graded_results && (
                       <div className="space-y-2">
-                        <h4 className="text-xs font-bold uppercase tracking-wider text-slate-400">Question Feedback:</h4>
+                        <h4 className="text-xs font-bold uppercase tracking-wider text-fg-3">Question Feedback:</h4>
                         {remediationResult.graded_results.map((gr: any, idx: number) => (
-                          <div key={idx} className="p-3 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-xs space-y-1">
+                          <div key={idx} className="p-3 bg-surface-2 rounded-xl border border-line text-xs space-y-1">
                             <div className="flex items-center justify-between font-bold">
-                              <span>Question {idx + 1}</span>
-                              <span className={gr.score >= 0.8 ? 'text-emerald-600' : gr.score >= 0.5 ? 'text-amber-600' : 'text-rose-600'}>
+                              <span className="text-fg">Question {idx + 1}</span>
+                              <span className={gr.score >= 0.8 ? 'text-success' : gr.score >= 0.5 ? 'text-warning' : 'text-danger'}>
                                 Score: {gr.score}
                               </span>
                             </div>
-                            <p className="text-slate-600 dark:text-slate-300">{gr.feedback}</p>
+                            <p className="text-fg-2">{gr.feedback}</p>
                             {gr.missing_keywords && gr.missing_keywords.length > 0 && (
-                              <p className="text-rose-500 text-[11px]">Missing key ideas: {gr.missing_keywords.join(', ')}</p>
+                              <p className="text-danger text-[11px]">Missing key ideas: {gr.missing_keywords.join(', ')}</p>
                             )}
                           </div>
                         ))}
@@ -711,7 +710,7 @@ function UnderstandingContent() {
                       {remediationResult.status === 'needs_another_round' && (
                         <button
                           onClick={() => handleStartRemediation(remediationData.topic_id, remediationResult.next_round)}
-                          className="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-2"
+                          className="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold transition shadow-xs flex items-center gap-2 cursor-pointer"
                         >
                           <RotateCcw className="w-4 h-4" />
                           Proceed to Round {remediationResult.next_round} ({remediationResult.next_style})
@@ -720,11 +719,11 @@ function UnderstandingContent() {
 
                       {remediationResult.suggested_readings && remediationResult.suggested_readings.length > 0 && (
                         <div className="w-full space-y-2">
-                          <h4 className="text-xs font-bold text-slate-500 uppercase">Suggested Course Readings:</h4>
+                          <h4 className="text-xs font-bold text-fg-3 uppercase">Suggested Course Readings:</h4>
                           {remediationResult.suggested_readings.map((sr: any, idx: number) => (
-                            <div key={idx} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-xs text-slate-700 dark:text-slate-300">
+                            <div key={idx} className="p-3 bg-surface-2 rounded-xl text-xs text-fg border border-line">
                               <p className="font-bold">{sr.document_name} (Page {sr.page || sr.slide || 1})</p>
-                              <p className="text-[11px] text-slate-500 mt-1 italic">"{sr.excerpt}"</p>
+                              <p className="text-[11px] text-fg-3 mt-1 italic">&ldquo;{sr.excerpt}&rdquo;</p>
                             </div>
                           ))}
                         </div>
@@ -732,7 +731,7 @@ function UnderstandingContent() {
 
                       <button
                         onClick={() => setRemediationOpen(false)}
-                        className="px-4 py-2 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 rounded-xl text-xs font-semibold transition"
+                        className="px-4 py-2 border border-line text-fg hover:bg-surface-2 rounded-xl text-xs font-semibold transition cursor-pointer"
                       >
                         Close
                       </button>
@@ -750,8 +749,8 @@ function UnderstandingContent() {
 
 export default function UnderstandingPage() {
   return (
-    <React.Suspense fallback={<div className="flex-1 flex items-center justify-center p-12 text-slate-400">Loading understanding analysis...</div>}>
+    <Suspense fallback={<div className="flex-1 flex items-center justify-center p-12 text-fg-3">Loading understanding analysis...</div>}>
       <UnderstandingContent />
-    </React.Suspense>
+    </Suspense>
   );
 }

@@ -3,7 +3,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { 
   UploadCloud, FileText, Presentation, Video, CheckCircle2, 
-  AlertCircle, Clock, Trash2, ArrowRight, Eye, RefreshCw 
+  AlertCircle, RefreshCw 
 } from 'lucide-react';
 import { api, Course, DocumentItem } from '@/lib/api';
 
@@ -22,7 +22,7 @@ export default function UploadPage() {
     try {
       const docs = await api.getDocuments(courseId);
       setDocuments(docs);
-    } catch (e: any) {
+    } catch {
       // ignore
     }
   };
@@ -89,17 +89,17 @@ export default function UploadPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-fg tracking-tight">
           Multimodal Knowledge Ingestion
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <p className="text-sm text-fg-3 mt-1">
           Upload textbooks, slides, and lecture media. Materials are parsed and indexed with exact source coordinates for citation grounding.
         </p>
       </div>
 
       {/* Course Selection */}
       <div className="flex items-center gap-3">
-        <label className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+        <label className="text-xs font-semibold uppercase tracking-wider text-fg-3">
           Target Course:
         </label>
         <select
@@ -109,10 +109,10 @@ export default function UploadPage() {
             setSelectedCourseId(id);
             loadDocuments(id);
           }}
-          className="px-3.5 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition"
+          className="px-3.5 py-2 rounded-xl bg-surface-2 border border-line-strong text-sm font-medium text-fg focus:outline-none focus:ring-2 focus:ring-focus transition"
         >
           {courses.map((c) => (
-            <option key={c.id} value={c.id}>
+            <option key={c.id} value={c.id} className="bg-surface text-fg">
               {c.code} — {c.title}
             </option>
           ))}
@@ -126,8 +126,8 @@ export default function UploadPage() {
         onClick={() => fileInputRef.current?.click()}
         className={`p-10 rounded-3xl border-2 border-dashed transition-all cursor-pointer text-center flex flex-col items-center justify-center gap-4 ${
           isUploading
-            ? 'border-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20'
-            : 'border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:border-indigo-500 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 shadow-xs'
+            ? 'border-primary bg-primary-soft'
+            : 'border-line-strong bg-surface hover:border-primary hover:bg-surface-2 shadow-card'
         }`}
       >
         <input
@@ -142,15 +142,15 @@ export default function UploadPage() {
           accept=".pdf,.pptx,.mp4,.mp3,.wav,.m4a,.png,.jpg"
         />
 
-        <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shadow-xs">
+        <div className="w-16 h-16 rounded-2xl bg-primary-soft text-primary-fg flex items-center justify-center shadow-xs">
           <UploadCloud className="w-8 h-8" />
         </div>
 
         <div className="space-y-1">
-          <h3 className="text-base font-bold text-slate-800 dark:text-slate-200">
+          <h3 className="text-base font-bold text-fg">
             {isUploading ? 'Ingesting Document...' : 'Drag and drop course material, or click to browse'}
           </h3>
-          <p className="text-xs text-slate-500 max-w-md mx-auto">
+          <p className="text-xs text-fg-3 max-w-md mx-auto">
             Supports PDF textbooks, PPTX slide decks, MP4/MP3 lecture recordings, and concept diagrams. Maximum file size 50MB.
           </p>
         </div>
@@ -158,13 +158,13 @@ export default function UploadPage() {
         {/* Live Upload Progress */}
         {isUploading && (
           <div className="w-full max-w-md space-y-2 pt-2">
-            <div className="flex items-center justify-between text-xs text-indigo-600 font-semibold">
+            <div className="flex items-center justify-between text-xs text-primary-fg font-semibold">
               <span>{uploadStage}</span>
               <span>{uploadProgress}%</span>
             </div>
-            <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-2 overflow-hidden">
+            <div className="w-full bg-surface-2 rounded-full h-2 overflow-hidden border border-line">
               <div 
-                className="bg-indigo-600 h-2 rounded-full transition-all duration-300"
+                className="bg-primary h-2 rounded-full transition-all duration-300"
                 style={{ width: `${uploadProgress}%` }}
               />
             </div>
@@ -173,29 +173,29 @@ export default function UploadPage() {
       </div>
 
       {error && (
-        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900 text-xs text-rose-600 dark:text-rose-400 font-medium flex items-center gap-2">
+        <div className="p-4 rounded-2xl bg-danger-soft border border-danger/30 text-xs text-danger font-medium flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{error}</span>
         </div>
       )}
 
       {successMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900 text-xs text-emerald-700 dark:text-emerald-300 font-medium flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-500" />
+        <div className="p-4 rounded-2xl bg-success-soft border border-success/30 text-xs text-success font-medium flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-success" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {/* Ingested Documents List */}
-      <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+      <div className="p-6 rounded-3xl bg-surface border border-line shadow-card space-y-4">
+        <div className="flex items-center justify-between border-b border-line pb-4">
           <div>
-            <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">Indexed Knowledge Sources</h3>
-            <p className="text-xs text-slate-500">Searchable vector chunks available to the AI tutor and quiz generator</p>
+            <h3 className="font-bold text-base text-fg">Indexed Knowledge Sources</h3>
+            <p className="text-xs text-fg-3">Searchable vector chunks available to the AI tutor and quiz generator</p>
           </div>
           <button
             onClick={() => loadDocuments(selectedCourseId)}
-            className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            className="p-2 rounded-xl text-fg-3 hover:text-fg hover:bg-surface-2 transition cursor-pointer"
             title="Refresh documents list"
           >
             <RefreshCw className="w-4 h-4" />
@@ -203,13 +203,13 @@ export default function UploadPage() {
         </div>
 
         {documents.length === 0 ? (
-          <p className="text-xs text-slate-400 py-8 text-center">No documents indexed for this course yet.</p>
+          <p className="text-xs text-fg-3 py-8 text-center">No documents indexed for this course yet.</p>
         ) : (
-          <div className="divide-y divide-slate-100 dark:divide-slate-800">
+          <div className="divide-y divide-line">
             {documents.map((doc) => (
               <div key={doc.id} className="py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="flex items-start gap-3">
-                  <div className="p-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 shrink-0">
+                  <div className="p-2.5 rounded-xl bg-primary-soft text-primary-fg shrink-0">
                     {doc.file_type === 'pdf' ? (
                       <FileText className="w-5 h-5" />
                     ) : doc.file_type === 'pptx' ? (
@@ -219,8 +219,8 @@ export default function UploadPage() {
                     )}
                   </div>
                   <div>
-                    <h4 className="text-sm font-semibold text-slate-900 dark:text-slate-100">{doc.filename}</h4>
-                    <div className="flex items-center gap-3 mt-1 text-xs text-slate-400">
+                    <h4 className="text-sm font-semibold text-fg">{doc.filename}</h4>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-fg-3">
                       <span className="uppercase font-medium">{doc.file_type}</span>
                       <span>• {doc.page_or_slide_count} {doc.file_type === 'pdf' ? 'Pages' : (doc.file_type === 'pptx' ? 'Slides' : 'Segments')}</span>
                       <span>• {(doc.file_size_bytes / 1024).toFixed(0)} KB</span>
@@ -229,12 +229,12 @@ export default function UploadPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
-                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full capitalize border ${
                     doc.status === 'indexed'
-                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900'
+                      ? 'bg-success-soft text-success border-success/30'
                       : doc.status === 'processing'
-                      ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200 dark:border-amber-900'
-                      : 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400 border border-rose-200 dark:border-rose-900'
+                      ? 'bg-warning-soft text-warning border-warning/30'
+                      : 'bg-danger-soft text-danger border-danger/30'
                   }`}>
                     {doc.status}
                   </span>

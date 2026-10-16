@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { 
   Brain, Sparkles, TrendingUp, AlertCircle, Clock, BookOpen, 
-  ArrowRight, CheckCircle2, PlayCircle, Layers, Calendar, ChevronRight 
+  ArrowRight, CheckCircle2, PlayCircle, Layers, ChevronRight 
 } from 'lucide-react';
 import { api, StudentDashboardData } from '@/lib/api';
 import { useAuth } from '@/lib/auth-context';
@@ -31,8 +31,8 @@ export default function StudentDashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-12 text-slate-400 gap-3">
-        <div className="w-10 h-10 border-3 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="flex-1 flex flex-col items-center justify-center p-12 text-fg-3 gap-3">
+        <div className="w-10 h-10 border-2 border-primary border-t-transparent rounded-full animate-spin" />
         <p className="text-sm">Calculating Bayesian knowledge states and review schedules...</p>
       </div>
     );
@@ -40,22 +40,22 @@ export default function StudentDashboardPage() {
 
   if (error || !data) {
     return (
-      <div className="max-w-md mx-auto my-16 p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl text-center space-y-4">
-        <div className="w-12 h-12 mx-auto rounded-2xl bg-rose-100 dark:bg-rose-950/60 text-rose-600 flex items-center justify-center">
+      <div className="max-w-md mx-auto my-16 p-8 rounded-3xl bg-surface border border-line shadow-card text-center space-y-4">
+        <div className="w-12 h-12 mx-auto rounded-2xl bg-danger-soft text-danger flex items-center justify-center">
           <AlertCircle className="w-6 h-6" />
         </div>
-        <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Unable to load dashboard data</h2>
-        <p className="text-sm text-slate-500">{error || 'Please make sure you are logged in.'}</p>
+        <h2 className="text-lg font-bold text-fg">Unable to load dashboard data</h2>
+        <p className="text-sm text-fg-3">{error || 'Please make sure you are logged in.'}</p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center pt-2">
           <button
             onClick={loadDashboard}
-            className="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition"
+            className="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-semibold text-sm transition cursor-pointer"
           >
             Retry
           </button>
           <Link
             href="/login"
-            className="px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 font-semibold text-sm transition"
+            className="px-4 py-2.5 rounded-xl bg-surface-2 hover:bg-surface-3 text-fg font-semibold text-sm transition border border-line"
           >
             Sign In Again
           </Link>
@@ -68,17 +68,17 @@ export default function StudentDashboardPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 text-white shadow-xl shadow-indigo-950/20">
+      {/* Hero Header Banner */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-[var(--hero-from)] to-[var(--hero-to)] text-white shadow-card">
         <div className="space-y-1.5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-700/60 text-indigo-200 text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-white text-xs font-semibold">
+            <Sparkles className="w-3.5 h-3.5 text-warning" />
             <span>Bayesian Knowledge Tracing Active</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
             Welcome back, {user?.full_name?.split(' ')[0] || 'Learner'}!
           </h1>
-          <p className="text-indigo-200 text-sm max-w-xl">
+          <p className="text-white/85 text-sm max-w-xl">
             Your mastery estimates update dynamically after every assessment response and spaced review.
           </p>
         </div>
@@ -86,14 +86,14 @@ export default function StudentDashboardPage() {
         <div className="flex items-center gap-3">
           <Link
             href="/quiz"
-            className="px-5 py-3 rounded-xl bg-white text-indigo-900 hover:bg-indigo-50 font-semibold text-sm shadow-md transition flex items-center gap-2"
+            className="px-5 py-3 rounded-xl bg-white text-primary hover:bg-white/90 font-semibold text-sm shadow-sm transition flex items-center gap-2"
           >
-            <PlayCircle className="w-4 h-4 text-indigo-600" />
+            <PlayCircle className="w-4 h-4 text-primary" />
             <span>Take Adaptive Quiz</span>
           </Link>
           <Link
             href="/tutor"
-            className="px-5 py-3 rounded-xl bg-indigo-700/80 hover:bg-indigo-700 text-white font-semibold text-sm border border-indigo-500/50 transition flex items-center gap-2"
+            className="px-5 py-3 rounded-xl bg-transparent border border-white text-white hover:bg-white/10 font-semibold text-sm transition flex items-center gap-2"
           >
             <BookOpen className="w-4 h-4" />
             <span>Ask AI Tutor</span>
@@ -104,61 +104,61 @@ export default function StudentDashboardPage() {
       {/* Metric Cards Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {/* Overall Mastery Card */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Overall Course Mastery</span>
-            <Brain className="w-5 h-5 text-indigo-600" />
+        <div className="p-6 rounded-2xl bg-surface border border-line shadow-card flex flex-col justify-between">
+          <div className="flex items-center justify-between text-fg-3 mb-2">
+            <span className="text-xs font-semibold">Overall course mastery</span>
+            <Brain className="w-5 h-5 text-primary-fg" />
           </div>
           <div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">{overallMasteryPct}%</span>
-              <span className="text-xs text-slate-400 font-medium">BKT Posterior P(L)</span>
+              <span className="text-3xl font-extrabold text-fg">{overallMasteryPct}%</span>
+              <span className="text-xs text-fg-3 font-medium">BKT Posterior P(L)</span>
             </div>
-            <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2 mt-3 overflow-hidden">
+            <div className="w-full bg-surface-2 rounded-full h-2 mt-3 overflow-hidden">
               <div 
-                className="bg-indigo-600 h-2 rounded-full transition-all duration-500" 
+                className="bg-primary h-2 rounded-full transition-all duration-500" 
                 style={{ width: `${overallMasteryPct}%` }}
               />
             </div>
           </div>
         </div>
 
-        {/* Mastered Topics Count */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Mastered Concepts</span>
-            <CheckCircle2 className="w-5 h-5 text-emerald-500" />
+        {/* Mastered Concepts */}
+        <div className="p-6 rounded-2xl bg-surface border border-line shadow-card flex flex-col justify-between">
+          <div className="flex items-center justify-between text-fg-3 mb-2">
+            <span className="text-xs font-semibold">Mastered concepts</span>
+            <CheckCircle2 className="w-5 h-5 text-success" />
           </div>
           <div>
-            <span className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">{data.topics_mastered_count}</span>
-            <p className="text-xs text-slate-400 mt-1">Modules with P(L) ≥ {(data.mastery_threshold ?? 0.85).toFixed(2)}</p>
+            <span className="text-3xl font-extrabold text-fg">{data.topics_mastered_count}</span>
+            <p className="text-xs text-fg-3 mt-1">Modules with P(L) ≥ {(data.mastery_threshold ?? 0.85).toFixed(2)}</p>
           </div>
         </div>
 
         {/* Spaced Revisions Due */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Revisions Due</span>
-            <Clock className="w-5 h-5 text-amber-500" />
+        <div className="p-6 rounded-2xl bg-surface border border-line shadow-card flex flex-col justify-between">
+          <div className="flex items-center justify-between text-fg-3 mb-2">
+            <span className="text-xs font-semibold">Revisions due</span>
+            <Clock className="w-5 h-5 text-warning" />
           </div>
           <div>
-            <span className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">{data.upcoming_revisions.length}</span>
-            <p className="text-xs text-slate-400 mt-1">Spaced-repetition review queue</p>
+            <span className="text-3xl font-extrabold text-fg">{data.upcoming_revisions.length}</span>
+            <p className="text-xs text-fg-3 mt-1">Spaced-repetition review queue</p>
           </div>
         </div>
 
-        {/* Questions Answered */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between">
-          <div className="flex items-center justify-between text-slate-500 mb-2">
-            <span className="text-xs font-semibold uppercase tracking-wider">Quiz Accuracy</span>
-            <TrendingUp className="w-5 h-5 text-blue-500" />
+        {/* Quiz Accuracy */}
+        <div className="p-6 rounded-2xl bg-surface border border-line shadow-card flex flex-col justify-between">
+          <div className="flex items-center justify-between text-fg-3 mb-2">
+            <span className="text-xs font-semibold">Quiz accuracy</span>
+            <TrendingUp className="w-5 h-5 text-primary-fg" />
           </div>
           <div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-extrabold text-slate-900 dark:text-slate-100">{data.overall_accuracy}%</span>
-              <span className="text-xs text-slate-400 font-medium">({data.total_questions_answered} attempts)</span>
+              <span className="text-3xl font-extrabold text-fg">{data.overall_accuracy}%</span>
+              <span className="text-xs text-fg-3 font-medium">({data.total_questions_answered} attempts)</span>
             </div>
-            <p className="text-xs text-slate-400 mt-1">Across all difficulty levels</p>
+            <p className="text-xs text-fg-3 mt-1">Across all difficulty levels</p>
           </div>
         </div>
       </div>
@@ -168,41 +168,41 @@ export default function StudentDashboardPage() {
         {/* Left Column: Personalized Next Actions (2 cols) */}
         <div className="lg:col-span-2 space-y-6">
           {/* Prioritized Recommendations */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+          <div className="p-6 rounded-3xl bg-surface border border-line shadow-card space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600">
+                <div className="p-2 rounded-xl bg-primary-soft text-primary-fg">
                   <Sparkles className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">Recommended Next Steps</h3>
-                  <p className="text-xs text-slate-500">Prerequisite-aware, targeted learning objectives</p>
+                  <h3 className="font-bold text-base text-fg">Recommended Next Steps</h3>
+                  <p className="text-xs text-fg-3">Prerequisite-aware, targeted learning objectives</p>
                 </div>
               </div>
             </div>
 
             <div className="space-y-3">
               {data.recommendations.length === 0 ? (
-                <p className="text-xs text-slate-400 py-4 text-center">No active recommendations right now. Keep up the great work!</p>
+                <p className="text-xs text-fg-3 py-4 text-center">No active recommendations right now. Keep up the great work!</p>
               ) : (
                 data.recommendations.map((rec) => (
                   <div 
                     key={rec.id} 
-                    className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-700/60 flex items-start justify-between gap-4 hover:border-indigo-300 dark:hover:border-indigo-700 transition"
+                    className="p-4 rounded-2xl bg-surface-2 border border-line flex items-start justify-between gap-4 hover:border-line-strong transition"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{rec.title}</span>
-                        <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                        <span className="text-xs font-bold text-fg">{rec.title}</span>
+                        <span className="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-md bg-primary-soft text-primary-fg">
                           {rec.recommendation_type.replace('_', ' ')}
                         </span>
                       </div>
-                      <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">{rec.reason}</p>
+                      <p className="text-xs text-fg-2 leading-relaxed">{rec.reason}</p>
                     </div>
 
                     <Link
                       href="/quiz"
-                      className="shrink-0 p-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition"
+                      className="shrink-0 p-2 rounded-xl bg-primary hover:bg-primary-hover text-white shadow-xs transition"
                       title="Practice this module"
                     >
                       <ArrowRight className="w-4 h-4" />
@@ -214,24 +214,24 @@ export default function StudentDashboardPage() {
           </div>
 
           {/* Topics Mastery Overview */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+          <div className="p-6 rounded-3xl bg-surface border border-line shadow-card space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">All Course Topics</h3>
-                <p className="text-xs text-slate-500">Bayesian estimates across curriculum modules</p>
+                <h3 className="font-bold text-base text-fg">All Course Topics</h3>
+                <p className="text-xs text-fg-3">Bayesian estimates across curriculum modules</p>
               </div>
-              <Link href="/courses" className="text-xs font-semibold text-indigo-600 hover:underline flex items-center gap-1">
+              <Link href="/courses" className="text-xs font-semibold text-primary-fg hover:underline flex items-center gap-1">
                 <span>View Prerequisite Map</span>
                 <ChevronRight className="w-3.5 h-3.5" />
               </Link>
             </div>
 
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+            <div className="divide-y divide-line">
               {[...data.weak_topics, ...data.strong_topics].map((topic) => (
                 <div key={topic.topic_id} className="py-3.5 flex items-center justify-between gap-4">
                   <div>
-                    <h4 className="text-sm font-semibold text-slate-800 dark:text-slate-200">{topic.topic_name}</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <h4 className="text-sm font-semibold text-fg">{topic.topic_name}</h4>
+                    <p className="text-xs text-fg-3 mt-0.5">
                       {topic.total_attempts} attempts • {topic.accuracy}% accuracy
                     </p>
                   </div>
@@ -239,7 +239,7 @@ export default function StudentDashboardPage() {
                     <BKTBadge pMastery={topic.p_mastery} state={topic.mastery_state} size="sm" />
                     <Link
                       href={`/quiz?topic_id=${topic.topic_id}`}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-950 text-slate-700 dark:text-slate-300 hover:text-indigo-600 transition"
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium bg-surface-2 hover:bg-surface-3 text-fg transition border border-line"
                     >
                       Quiz
                     </Link>
@@ -250,37 +250,37 @@ export default function StudentDashboardPage() {
           </div>
         </div>
 
-        {/* Right Column: Spaced Repetition Queue & Weak Topics */}
+        {/* Right Column: Spaced Repetition Queue & Learning Shortcuts */}
         <div className="space-y-6">
           {/* Spaced Review Due Queue */}
-          <div className="p-6 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+          <div className="p-6 rounded-3xl bg-surface border border-line shadow-card space-y-4">
             <div className="flex items-center gap-2.5">
-              <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600">
+              <div className="p-2 rounded-xl bg-warning-soft text-warning">
                 <Clock className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-bold text-base text-slate-900 dark:text-slate-100">Spaced Repetition</h3>
-                <p className="text-xs text-slate-500">Scheduled to prevent memory decay</p>
+                <h3 className="font-bold text-base text-fg">Spaced Repetition</h3>
+                <p className="text-xs text-fg-3">Scheduled to prevent memory decay</p>
               </div>
             </div>
 
             {data.upcoming_revisions.length === 0 ? (
-              <div className="p-4 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 text-center">
-                <CheckCircle2 className="w-6 h-6 text-emerald-500 mx-auto mb-1.5" />
-                <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">All caught up!</p>
-                <p className="text-[11px] text-emerald-600 dark:text-emerald-400 mt-0.5">No reviews due today. Check back tomorrow.</p>
+              <div className="p-4 rounded-2xl bg-success-soft border border-success/30 text-center">
+                <CheckCircle2 className="w-6 h-6 text-success mx-auto mb-1.5" />
+                <p className="text-xs font-semibold text-success">All caught up!</p>
+                <p className="text-[11px] text-fg-3 mt-0.5">No reviews due today. Check back tomorrow.</p>
               </div>
             ) : (
               <div className="space-y-2.5">
                 {data.upcoming_revisions.map((rev) => (
-                  <div key={rev.topic_id} className="p-3.5 rounded-xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 flex items-center justify-between">
-                    <div>
-                      <p className="text-xs font-bold text-slate-800 dark:text-slate-200">{rev.topic_name}</p>
-                      <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium">Due for review today</p>
+                  <div key={rev.topic_id} className="p-3.5 rounded-xl bg-warning-soft border border-warning/30 flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-fg line-clamp-2">{rev.topic_name}</p>
+                      <p className="text-[10px] text-warning font-semibold">Due for review today</p>
                     </div>
                     <Link
                       href={`/quiz?topic_id=${rev.topic_id}`}
-                      className="px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-semibold transition"
+                      className="px-3 py-1 bg-primary hover:bg-primary-hover text-white rounded-lg text-xs font-semibold shrink-0 transition"
                     >
                       Review
                     </Link>
@@ -291,40 +291,40 @@ export default function StudentDashboardPage() {
           </div>
 
           {/* Quick Actions Shortcuts */}
-          <div className="p-6 rounded-3xl bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-3">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Learning Shortcuts</h4>
+          <div className="p-6 rounded-3xl bg-surface border border-line shadow-card space-y-3">
+            <h4 className="text-xs font-bold text-fg-2">Learning shortcuts</h4>
             <div className="space-y-2">
               <Link
                 href="/tutor"
-                className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-indigo-50/50 dark:hover:bg-slate-700/60 border border-slate-200/60 dark:border-slate-700 flex items-center justify-between text-xs font-semibold text-slate-800 dark:text-slate-200 transition"
+                className="w-full p-3 rounded-xl bg-surface hover:bg-surface-3 border border-line flex items-center justify-between text-xs font-semibold text-fg transition"
               >
                 <div className="flex items-center gap-2.5">
-                  <BookOpen className="w-4 h-4 text-indigo-600" />
+                  <BookOpen className="w-4 h-4 text-primary-fg" />
                   <span>Ask questions on textbook chapters</span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className="w-4 h-4 text-fg-3" />
               </Link>
 
               <Link
                 href="/upload"
-                className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-indigo-50/50 dark:hover:bg-slate-700/60 border border-slate-200/60 dark:border-slate-700 flex items-center justify-between text-xs font-semibold text-slate-800 dark:text-slate-200 transition"
+                className="w-full p-3 rounded-xl bg-surface hover:bg-surface-3 border border-line flex items-center justify-between text-xs font-semibold text-fg transition"
               >
                 <div className="flex items-center gap-2.5">
-                  <Layers className="w-4 h-4 text-blue-600" />
+                  <Layers className="w-4 h-4 text-primary-fg" />
                   <span>Upload lecture slides or PDF notes</span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className="w-4 h-4 text-fg-3" />
               </Link>
 
               <Link
                 href="/analytics"
-                className="w-full p-3 rounded-xl bg-white dark:bg-slate-800 hover:bg-indigo-50/50 dark:hover:bg-slate-700/60 border border-slate-200/60 dark:border-slate-700 flex items-center justify-between text-xs font-semibold text-slate-800 dark:text-slate-200 transition"
+                className="w-full p-3 rounded-xl bg-surface hover:bg-surface-3 border border-line flex items-center justify-between text-xs font-semibold text-fg transition"
               >
                 <div className="flex items-center gap-2.5">
-                  <TrendingUp className="w-4 h-4 text-emerald-600" />
+                  <TrendingUp className="w-4 h-4 text-success" />
                   <span>Inspect BKT learning curve history</span>
                 </div>
-                <ChevronRight className="w-4 h-4 text-slate-400" />
+                <ChevronRight className="w-4 h-4 text-fg-3" />
               </Link>
             </div>
           </div>
